@@ -18,6 +18,7 @@
     "node": ">=14"
   },
   "devDependencies": {
+    "@sinonjs/referee": "^9.1.2",
     "test": "^3.3.0"
   },
   "scripts": {

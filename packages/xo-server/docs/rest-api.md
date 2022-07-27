@@ -252,6 +252,28 @@ $ curl \
 "2b0266aa-c753-6fbc-e4dd-c79be7782052"
 ```
 
+## Tasks
+
+Tasks are available in the [`tasks` collection](#collections).
+
+Example of a task:
+
+```console
+$ curl -k \
+  -b authenticationToken=KQxQdm2vMiv7jBIK0hgkmgxKzemd8wSJ7ugFGKFkTbs \
+  'https://xo.company.lan/rest/v0/tasks/lggporvy'
+{
+  "name": "REST: start VM",
+  "objectId": "ebc8ad77-1323-a56e-5082-af6e7fadbaad",
+  "id": "lggporvy",
+  "start": 1681486568495,
+  "status": "success",
+  "end": 1681486572264
+}
+```
+
+### Polling
+
 ## The future
 
 We are adding features and improving the REST API step by step. If you have interesting use cases or feedback, please ask directly at <https://xcp-ng.org/forum/category/12/xen-orchestra>
