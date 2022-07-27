@@ -2,6 +2,7 @@ import Config from '@xen-orchestra/mixins/Config.mjs'
 import Hooks from '@xen-orchestra/mixins/Hooks.mjs'
 import HttpProxy from '@xen-orchestra/mixins/HttpProxy.mjs'
 import SslCertificate from '@xen-orchestra/mixins/SslCertificate.mjs'
+import Tasks from '@xen-orchestra/mixins/Tasks.mjs'
 import mixin from '@xen-orchestra/mixin'
 import { createDebounceResource } from '@vates/disposable/debounceResource.js'
 
@@ -29,6 +30,7 @@ export default class App {
         Remotes,
         ReverseProxy,
         SslCertificate,
+        Tasks,
       },
       [opts]
     )
