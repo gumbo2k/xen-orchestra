@@ -1,13 +1,20 @@
 <template>
-  <!-- TODO: add a loader when data is not fully loaded or undefined -->
-  <!-- TODO: Display the NoDataError component in case of a data recovery error -->
-  <LinearChart
-    :data="data"
-    :max-value="customMaxValue"
-    :subtitle="$t('last-week')"
-    :title="$t('pool-cpu-usage')"
-    :value-formatter="customValueFormatter"
-  />
+  <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
+    <UiCardTitle>{{ $t("pool-cpu-usage") }}</UiCardTitle>
+    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">{{
+      $t("last-week")
+    }}</UiCardTitle>
+    <NoDataError v-if="hasError" />
+    <template v-else>
+      <UiSpinner v-if="isLoading" class="spinner" />
+      <LinearChart
+        v-else
+        :data="data"
+        :max-value="customMaxValue"
+        :value-formatter="customValueFormatter"
+      />
+    </template>
+  </UiCard>
 </template>
 
 <script lang="ts" setup>
@@ -20,9 +27,27 @@ import { useHostStore } from "@/stores/host.store";
 import type { LinearChartData } from "@/types/chart";
 import { sumBy } from "lodash-es";
 import { computed, inject } from "vue";
+import type { FetchedStats } from "@/composables/fetch-stats.composable";
+import type { HostStats } from "@/libs/xapi-stats";
+import { sumBy } from "lodash-es";
+import LinearChart from "@/components/charts/LinearChart.vue";
+import type { LinearChartData } from "@/types/chart";
+import NoDataError from "@/components/NoDataError.vue";
+import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
+import { storeToRefs } from "pinia";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiCardTitle from "@/components/ui/UiCardTitle.vue";
+import { useHostStore } from "@/stores/host.store";
 import { useI18n } from "vue-i18n";
+import UiSpinner from "@/components/ui/UiSpinner.vue";
+import type { XenApiHost } from "@/libs/xen-api";
+
+const SUBTITLE_LEVEL = 3;
 
 const { t } = useI18n();
+
+const hostStore = useHostStore();
+const { allRecords: hosts, hasError } = storeToRefs(hostStore);
 
 const hostLastWeekStats =
   inject<FetchedStats<XenApiHost, HostStats>>("hostLastWeekStats");
@@ -77,6 +102,38 @@ const data = computed<LinearChartData>(() => {
     },
   ];
 });
+const isStatFetched = computed(() => {
+  const stats = hostLastWeekStats?.stats?.value;
+  if (stats == null) {
+    return false;
+  }
+
+  return stats.every((host) => {
+    const hostStats = host.stats;
+    return (
+      hostStats != null &&
+      Object.values(hostStats.cpus)[0].length === data.value[0].data.length
+    );
+  });
+});
+
+const isLoading = computed(() => hostStore.isLoading || !isStatFetched.value);
 
 const customValueFormatter = (value: number) => `${value}%`;
 </script>
+
+<style lang="postcss" scoped>
+.spinner {
+  color: var(--color-extra-blue-base);
+  display: flex;
+  margin: auto;
+  width: 40px;
+  height: 40px;
+}
+
+.subtitle {
+  --section-title-left-size: 1.5rem;
+  --section-title-left-color: var(--color-blue-scale-300);
+  --section-title-left-weight: 400;
+}
+</style>

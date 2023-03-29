@@ -1,17 +1,27 @@
 <template>
-  <!-- TODO: add a loader when data is not fully loaded or undefined -->
-  <!-- TODO: display the NoDataError component in case of a data recovery error -->
-  <LinearChart
-    :data="data"
-    :max-value="customMaxValue"
-    :subtitle="$t('last-week')"
-    :title="$t('pool-ram-usage')"
-    :value-formatter="customValueFormatter"
-  >
-    <template #summary>
-      <SizeStatsSummary :size="currentData.size" :usage="currentData.usage" />
+  <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
+    <UiCardTitle>{{ $t("pool-ram-usage") }}</UiCardTitle>
+    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">{{
+      $t("last-week")
+    }}</UiCardTitle>
+    <NoDataError v-if="hasError" />
+    <template v-else>
+      <UiSpinner v-if="isLoading" class="spinner" />
+      <LinearChart
+        v-else
+        :data="data"
+        :max-value="customMaxValue"
+        :value-formatter="customValueFormatter"
+      >
+        <template #summary>
+          <SizeStatsSummary
+            :size="currentData.size"
+            :usage="currentData.usage"
+          />
+        </template>
+      </LinearChart>
     </template>
-  </LinearChart>
+  </UiCard>
 </template>
 
 <script lang="ts" setup>
@@ -30,6 +40,8 @@ import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
 
 const hostMetricsSubscription = useHostMetricsStore().subscribe();
+
+const SUBTITLE_LEVEL = 3;
 
 const hostStore = useHostStore();
 const { runningHosts } = hostStore.subscribe({ hostMetricsSubscription });
@@ -96,5 +108,39 @@ const data = computed<LinearChartData>(() => {
   ];
 });
 
+const isStatFetched = computed(() => {
+  const stats = hostLastWeekStats?.stats?.value;
+  if (stats == null) {
+    return false;
+  }
+
+  return stats.every((host) => {
+    const hostStats = host.stats;
+    return (
+      hostStats != null && hostStats.memory.length === data.value[0].data.length
+    );
+  });
+});
+
+const isLoading = computed(
+  () => (hostStore.isLoading && !hostStore.hasError) || !isStatFetched.value
+);
+
 const customValueFormatter = (value: number) => String(formatSize(value));
 </script>
+
+<style lang="postcss" scoped>
+.spinner {
+  color: var(--color-extra-blue-base);
+  display: flex;
+  margin: auto;
+  width: 40px;
+  height: 40px;
+}
+
+.subtitle {
+  --section-title-left-size: 1.5rem;
+  --section-title-left-color: var(--color-blue-scale-300);
+  --section-title-left-weight: 400;
+}
+</style>

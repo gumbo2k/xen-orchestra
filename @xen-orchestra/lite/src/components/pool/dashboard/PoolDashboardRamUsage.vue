@@ -1,6 +1,6 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
-    <UiCardTitle>{{ $t("ram-usage") }}</UiCardTitle>
+    <UiCardTitle class="title">{{ $t("ram-usage") }}</UiCardTitle>
     <HostsRamUsage />
     <VmsRamUsage />
   </UiCard>
@@ -20,3 +20,8 @@ const { hasError: hasHostError } = useHostStore().subscribe();
 
 const hasError = computed(() => hasVmError.value || hasHostError.value);
 </script>
+<style lang="postcss" scoped>
+.title {
+  margin-bottom: 2rem;
+}
+</style>

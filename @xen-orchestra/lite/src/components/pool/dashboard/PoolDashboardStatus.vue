@@ -57,3 +57,8 @@ const totalVmsCount = computed(() => vms.value.length);
 
 const activeVmsCount = computed(() => runningVms.value.length);
 </script>
+<style lang="postcss" scoped>
+.title {
+  margin-bottom: 2rem;
+}
+</style>

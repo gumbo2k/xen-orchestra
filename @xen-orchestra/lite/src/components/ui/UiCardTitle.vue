@@ -1,14 +1,14 @@
 <template>
-  <div :class="{ subtitle }" class="ui-section-title">
+  <div class="ui-section-title">
     <component
-      :is="subtitle ? 'h5' : 'h4'"
+      :is="level === 1 ? 'h4' : level === 2 ? 'h5' : 'h6'"
       v-if="$slots.default || left"
       class="left"
     >
       <slot>{{ left }}</slot>
     </component>
     <component
-      :is="subtitle ? 'h6' : 'h5'"
+      :is="level === 1 ? 'h5' : 'h6'"
       v-if="$slots.right || right"
       class="right"
     >
@@ -18,11 +18,14 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
-  subtitle?: boolean;
-  left?: string;
-  right?: string;
-}>();
+withDefaults(
+  defineProps<{
+    level?: number;
+    left?: string;
+    right?: string;
+  }>(),
+  { level: 1 }
+);
 </script>
 
 <style lang="postcss" scoped>
@@ -30,7 +33,6 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
 
   --section-title-left-size: 2rem;
   --section-title-left-color: var(--color-blue-scale-100);
@@ -38,17 +40,6 @@ defineProps<{
   --section-title-right-size: 1.6rem;
   --section-title-right-color: var(--color-extra-blue-base);
   --section-title-right-weight: 700;
-
-  &.subtitle {
-    border-bottom: 1px solid var(--color-extra-blue-base);
-
-    --section-title-left-size: 1.6rem;
-    --section-title-left-color: var(--color-extra-blue-base);
-    --section-title-left-weight: 700;
-    --section-title-right-size: 1.4rem;
-    --section-title-right-color: var(--color-extra-blue-base);
-    --section-title-right-weight: 400;
-  }
 }
 
 .left {

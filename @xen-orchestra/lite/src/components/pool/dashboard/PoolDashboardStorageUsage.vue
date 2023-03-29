@@ -1,6 +1,7 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
     <UiCardTitle
+      class="title"
       :left="$t('storage-usage')"
       :right="$t('top-#', { n: N_ITEMS })"
     />
@@ -63,3 +64,8 @@ const data = computed<{
   return { result, maxSize, usedSize };
 });
 </script>
+<style lang="postcss" scoped>
+.title {
+  margin-bottom: 2rem;
+}
+</style>

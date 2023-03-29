@@ -115,4 +115,7 @@ const hasError = computed(
     color: var(--footer-value-color);
   }
 }
+.title {
+  margin-bottom: 2rem;
+}
 </style>

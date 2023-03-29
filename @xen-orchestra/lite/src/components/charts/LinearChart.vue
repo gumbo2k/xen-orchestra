@@ -1,8 +1,6 @@
 <template>
-  <UiCard class="linear-chart">
-    <VueCharts :option="option" autoresize class="chart" />
-    <slot name="summary" />
-  </UiCard>
+  <VueCharts :option="option" autoresize class="chart" />
+  <slot name="summary" />
 </template>
 
 <script lang="ts" setup>
@@ -21,7 +19,6 @@ import {
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import type { OptionDataValue } from "echarts/types/src/util/types";
-import UiCard from "@/components/ui/UiCard.vue";
 
 const Y_AXIS_MAX_VALUE = 200;
 

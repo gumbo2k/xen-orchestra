@@ -56,3 +56,18 @@ const statFetched: ComputedRef<boolean> = computed(() =>
     : stats.value.length > 0 && stats.value.length === data.value.length
 );
 </script>
+
+<style lang="postcss" scoped>
+.subtitle {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-extra-blue-base);
+
+  --section-title-left-size: 1.6rem;
+  --section-title-left-color: var(--color-extra-blue-base);
+  --section-title-left-weight: 700;
+
+  --section-title-right-size: 1.4rem;
+  --section-title-right-color: var(--color-extra-blue-base);
+  --section-title-right-weight: 400;
+}
+</style>
