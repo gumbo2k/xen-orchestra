@@ -1,28 +1,7 @@
 <template>
   <div class="pool-dashboard-view">
     <div class="item">
-      <PoolDashboardStatus />
-    </div>
-    <div class="item">
-      <PoolDashboardStorageUsage />
-    </div>
-    <div class="item">
       <PoolDashboardCpuUsage />
-    </div>
-    <div class="item">
-      <PoolDashboardRamUsage />
-    </div>
-    <div class="item">
-      <PoolDashboardCpuProvisionning />
-    </div>
-    <div class="item">
-      <PoolDashboardNetworkChart />
-    </div>
-    <div class="item">
-      <PoolDashboardRamUsageChart />
-    </div>
-    <div class="item">
-      <PoolCpuUsageChart />
     </div>
   </div>
 </template>
@@ -47,47 +26,50 @@ import { GRANULARITY, type HostStats, type VmStats } from "@/libs/xapi-stats";
 import type { XenApiHost, XenApiVm } from "@/libs/xen-api";
 import { useHostStore } from "@/stores/host.store";
 import { useVmStore } from "@/stores/vm.store";
+import { watchEffect } from "vue";
 
 const hostStore = useHostStore();
 const vmStore = useVmStore();
 
-const {
-  register: hostRegister,
-  unregister: hostUnregister,
-  stats: hostStats,
-} = useFetchStats<XenApiHost, HostStats>("host", GRANULARITY.Seconds);
+// const {
+//   register: hostRegister,
+//   unregister: hostUnregister,
+//   stats: hostStats,
+// } = useFetchStats<XenApiHost, HostStats>("host", GRANULARITY.Seconds);
 const {
   register: vmRegister,
   unregister: vmUnregister,
   stats: vmStats,
 } = useFetchStats<XenApiVm, VmStats>("vm", GRANULARITY.Seconds);
 
-const hostLastWeekStats = useFetchStats<XenApiHost, HostStats>(
-  "host",
-  GRANULARITY.Hours
-);
+// const hostLastWeekStats = useFetchStats<XenApiHost, HostStats>(
+//   "host",
+//   GRANULARITY.Hours
+// );
 
 const runningHosts = computed(() => hostStore.allRecords.filter(isHostRunning));
 const runningVms = computed(() =>
   vmStore.allRecords.filter((vm) => vm.power_state === "Running")
 );
 
-provide("hostStats", hostStats);
+// watchEffect(() => console.log(hostStats.value?.[0]?.stats));
+
+// provide("hostStats", hostStats);
 provide("vmStats", vmStats);
 
-provide("hostLastWeekStats", hostLastWeekStats);
+// provide("hostLastWeekStats", hostLastWeekStats);
 
 watch(runningHosts, (hosts, previousHosts) => {
   // turned On
   differenceBy(hosts, previousHosts ?? [], "uuid").forEach((host) => {
-    hostRegister(host);
-    hostLastWeekStats.register(host);
+    // hostRegister(host);
+    // hostLastWeekStats.register(host);
   });
 
   // turned Off
   differenceBy(previousHosts, hosts, "uuid").forEach((host) => {
-    hostUnregister(host);
-    hostLastWeekStats.unregister(host);
+    // hostUnregister(host);
+    // hostLastWeekStats.unregister(host);
   });
 });
 
@@ -101,8 +83,8 @@ watch(runningVms, (vms, previousVms) => {
 
 onMounted(() => {
   runningHosts.value.forEach((host) => {
-    hostRegister(host);
-    hostLastWeekStats.register(host);
+    // hostRegister(host);
+    // hostLastWeekStats.register(host);
   });
 
   runningVms.value.forEach((vm) => vmRegister(vm));

@@ -35,7 +35,12 @@ export const useVmStore = defineStore("vm", () => {
     return vmsOpaqueRefsByHostOpaqueRef;
   });
 
-  async function getStats(id: string, granularity: GRANULARITY) {
+  async function getStats(
+    id: string,
+    granularity: GRANULARITY,
+    ignoreExpired = false,
+    { abortSignal }: { abortSignal?: AbortSignal } = {}
+  ) {
     const vm = baseVmContext.getRecordByUuid(id);
     if (vm === undefined) {
       throw new Error(`VM ${id} could not be found.`);
@@ -46,9 +51,11 @@ export const useVmStore = defineStore("vm", () => {
     }
 
     return xapiStats.value?._getAndUpdateStats({
+      abortSignal,
       host,
       uuid: vm.uuid,
       granularity,
+      ignoreExpired,
     });
   }
 

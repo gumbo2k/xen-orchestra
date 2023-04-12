@@ -51,9 +51,9 @@ const data = computed<{ id: string; label: string; value: number }[]>(() => {
   return result;
 });
 
-const statFetched: ComputedRef<boolean> = computed(() =>
-  statFetched.value
+const statFetched: ComputedRef<boolean> = computed(() => {
+  return statFetched.value
     ? true
-    : stats.value.length > 0 && stats.value.length === data.value.length
-);
+    : stats.value.length > 0 && stats.value.length === data.value.length;
+});
 </script>
