@@ -1,7 +1,7 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("pool-ram-usage") }}</UiCardTitle>
-    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">
+    <UiCardTitle :class="'subtitle'" :level="SUBTITLE_LEVEL">
       {{ $t("last-week") }}
     </UiCardTitle>
     <NoDataError v-if="hasError" />
@@ -129,11 +129,3 @@ const isLoading = computed(
 
 const customValueFormatter = (value: number) => String(formatSize(value));
 </script>
-
-<style lang="postcss" scoped>
-.subtitle {
-  --section-title-left-size: 1.5rem;
-  --section-title-left-color: var(--color-blue-scale-300);
-  --section-title-left-weight: 400;
-}
-</style>

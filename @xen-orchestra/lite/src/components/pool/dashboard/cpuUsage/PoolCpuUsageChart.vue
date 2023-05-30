@@ -1,9 +1,9 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("pool-cpu-usage") }}</UiCardTitle>
-    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">{{
-      $t("last-week")
-    }}</UiCardTitle>
+    <UiCardTitle :subtitleClass="'subtitle'" :level="SUBTITLE_LEVEL">
+      {{ $t("last-week") }}
+    </UiCardTitle>
     <NoDataError v-if="hasError" />
     <UiCardSpinner v-else-if="isLoading" />
     <LinearChart
@@ -107,11 +107,3 @@ const isLoading = computed(() => isFetching.value || !isStatFetched.value);
 
 const customValueFormatter = (value: number) => `${value}%`;
 </script>
-
-<style lang="postcss" scoped>
-.subtitle {
-  --section-title-left-size: 1.5rem;
-  --section-title-left-color: var(--color-blue-scale-300);
-  --section-title-left-weight: 400;
-}
-</style>

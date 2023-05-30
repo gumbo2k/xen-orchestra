@@ -1,6 +1,6 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
-    <UiCardTitle class="title">
+    <UiCardTitle>
       {{ $t("cpu-provisioning") }}
       <template v-if="!hasError" #right>
         <!-- TODO: add a tooltip for the warning icon -->
@@ -114,8 +114,5 @@ const hasError = computed(
   & .footer-value {
     color: var(--footer-value-color);
   }
-}
-.title {
-  margin-bottom: 2rem;
 }
 </style>

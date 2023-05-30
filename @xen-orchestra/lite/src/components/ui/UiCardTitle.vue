@@ -1,5 +1,5 @@
 <template>
-  <div class="ui-section-title">
+  <div :class="[subtitleClass, 'ui-section-title']">
     <component
       :is="level === 1 ? 'h4' : level === 2 ? 'h5' : 'h6'"
       v-if="$slots.default || left"
@@ -23,6 +23,7 @@ withDefaults(
     level?: number;
     left?: string;
     right?: string;
+    subtitleClass?: string;
   }>(),
   { level: 1 }
 );
@@ -40,6 +41,25 @@ withDefaults(
   --section-title-right-size: 1.6rem;
   --section-title-right-color: var(--color-extra-blue-base);
   --section-title-right-weight: 700;
+
+  &.subtitle {
+    margin-bottom: 1rem;
+    --section-title-left-size: 1.5rem;
+    --section-title-left-color: var(--color-blue-scale-300);
+    --section-title-left-weight: 400;
+  }
+
+  &.subtitle-with-underline {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--color-extra-blue-base);
+    --section-title-left-size: 1.6rem;
+    --section-title-left-color: var(--color-extra-blue-base);
+    --section-title-left-weight: 700;
+    --section-title-right-size: 1.4rem;
+    --section-title-right-color: var(--color-extra-blue-base);
+    --section-title-right-weight: 400;
+  }
 }
 
 .left {
