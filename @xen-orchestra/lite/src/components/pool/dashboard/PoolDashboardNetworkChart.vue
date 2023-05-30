@@ -5,7 +5,7 @@
       {{ $t("last-week") }}
     </UiCardTitle>
     <NoDataError v-if="hasError" />
-    <UiSpinner v-else-if="isLoading" class="spinner" />
+    <UiCardSpinner v-else-if="isLoading" />
     <LinearChart
       v-else
       :data="data"
@@ -29,7 +29,7 @@ import NoDataError from "@/components/NoDataError.vue";
 import { storeToRefs } from "pinia";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiCardTitle from "@/components/ui/UiCardTitle.vue";
-import UiSpinner from "@/components/ui/UiSpinner.vue";
+import UiCardSpinner from "@/components/ui/UiCardSpinner.vue";
 import { useHostStore } from "@/stores/host.store";
 import type { XenApiHost } from "@/libs/xen-api";
 
@@ -128,13 +128,6 @@ const customValueFormatter = (value: number) => String(formatSize(value));
 </script>
 
 <style lang="postcss" scoped>
-.spinner {
-  color: var(--color-extra-blue-base);
-  display: flex;
-  margin: auto;
-  width: 40px;
-  height: 40px;
-}
 .subtitle {
   --section-title-left-size: 1.5rem;
   --section-title-left-color: var(--color-blue-scale-300);
