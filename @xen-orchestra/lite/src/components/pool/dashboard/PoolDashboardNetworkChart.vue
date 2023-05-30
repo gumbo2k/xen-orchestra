@@ -26,7 +26,6 @@ import type { LinearChartData } from "@/types/chart";
 import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
 import { map } from "lodash-es";
 import NoDataError from "@/components/NoDataError.vue";
-import { storeToRefs } from "pinia";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiCardTitle from "@/components/ui/UiCardTitle.vue";
 import UiCardSpinner from "@/components/ui/UiCardSpinner.vue";
