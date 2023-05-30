@@ -1,26 +1,21 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("pool-ram-usage") }}</UiCardTitle>
-    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">{{
-      $t("last-week")
-    }}</UiCardTitle>
+    <UiCardTitle class="subtitle" :level="SUBTITLE_LEVEL">
+      {{ $t("last-week") }}
+    </UiCardTitle>
     <NoDataError v-if="hasError" />
-    <template v-else>
-      <UiSpinner v-if="isLoading" class="spinner" />
-      <LinearChart
-        v-else
-        :data="data"
-        :max-value="customMaxValue"
-        :value-formatter="customValueFormatter"
-      >
-        <template #summary>
-          <SizeStatsSummary
-            :size="currentData.size"
-            :usage="currentData.usage"
-          />
-        </template>
-      </LinearChart>
-    </template>
+    <UiSpinner v-else-if="isLoading" class="spinner" />
+    <LinearChart
+      v-else
+      :data="data"
+      :max-value="customMaxValue"
+      :value-formatter="customValueFormatter"
+    >
+      <template #summary>
+        <SizeStatsSummary :size="currentData.size" :usage="currentData.usage" />
+      </template>
+    </LinearChart>
   </UiCard>
 </template>
 
@@ -30,10 +25,14 @@ import SizeStatsSummary from "@/components/ui/SizeStatsSummary.vue";
 import type { FetchedStats } from "@/composables/fetch-stats.composable";
 import { formatSize, getHostMemory } from "@/libs/utils";
 import type { HostStats } from "@/libs/xapi-stats";
+import NoDataError from "@/components/NoDataError.vue";
 import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
 import type { XenApiHost } from "@/libs/xen-api";
 import { useHostMetricsStore } from "@/stores/host-metrics.store";
 import { useHostStore } from "@/stores/host.store";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiCardTitle from "@/components/ui/UiCardTitle.vue";
+import UiSpinner from "@/components/ui/UiSpinner.vue";
 import type { LinearChartData } from "@/types/chart";
 import { sumBy } from "lodash-es";
 import { computed, inject } from "vue";
@@ -41,10 +40,12 @@ import { useI18n } from "vue-i18n";
 
 const hostMetricsSubscription = useHostMetricsStore().subscribe();
 
-const SUBTITLE_LEVEL = 3;
+const SUBTITLE_LEVEL = 2;
 
 const hostStore = useHostStore();
-const { runningHosts } = hostStore.subscribe({ hostMetricsSubscription });
+const { runningHosts, isFetching, hasError } = hostStore.subscribe({
+  hostMetricsSubscription,
+});
 
 const { t } = useI18n();
 
@@ -123,7 +124,7 @@ const isStatFetched = computed(() => {
 });
 
 const isLoading = computed(
-  () => (hostStore.isLoading && !hostStore.hasError) || !isStatFetched.value
+  () => (isFetching.value && !hasError.value) || !isStatFetched.value
 );
 
 const customValueFormatter = (value: number) => String(formatSize(value));

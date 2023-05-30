@@ -5,27 +5,17 @@
       $t("last-week")
     }}</UiCardTitle>
     <NoDataError v-if="hasError" />
-    <template v-else>
-      <UiSpinner v-if="isLoading" class="spinner" />
-      <LinearChart
-        v-else
-        :data="data"
-        :max-value="customMaxValue"
-        :value-formatter="customValueFormatter"
-      />
-    </template>
+    <UiSpinner v-else-if="isLoading" class="spinner" />
+    <LinearChart
+      v-else
+      :data="data"
+      :max-value="customMaxValue"
+      :value-formatter="customValueFormatter"
+    />
   </UiCard>
 </template>
 
 <script lang="ts" setup>
-import LinearChart from "@/components/charts/LinearChart.vue";
-import type { FetchedStats } from "@/composables/fetch-stats.composable";
-import type { HostStats } from "@/libs/xapi-stats";
-import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
-import type { XenApiHost } from "@/libs/xen-api";
-import { useHostStore } from "@/stores/host.store";
-import type { LinearChartData } from "@/types/chart";
-import { sumBy } from "lodash-es";
 import { computed, inject } from "vue";
 import type { FetchedStats } from "@/composables/fetch-stats.composable";
 import type { HostStats } from "@/libs/xapi-stats";
@@ -34,7 +24,6 @@ import LinearChart from "@/components/charts/LinearChart.vue";
 import type { LinearChartData } from "@/types/chart";
 import NoDataError from "@/components/NoDataError.vue";
 import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
-import { storeToRefs } from "pinia";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiCardTitle from "@/components/ui/UiCardTitle.vue";
 import { useHostStore } from "@/stores/host.store";
@@ -46,13 +35,10 @@ const SUBTITLE_LEVEL = 3;
 
 const { t } = useI18n();
 
-const hostStore = useHostStore();
-const { allRecords: hosts, hasError } = storeToRefs(hostStore);
-
 const hostLastWeekStats =
   inject<FetchedStats<XenApiHost, HostStats>>("hostLastWeekStats");
 
-const { records: hosts } = useHostStore().subscribe();
+const { records: hosts, isFetching, hasError } = useHostStore().subscribe();
 
 const customMaxValue = computed(
   () => 100 * sumBy(hosts.value, (host) => +host.cpu_info.cpu_count)
@@ -117,7 +103,7 @@ const isStatFetched = computed(() => {
   });
 });
 
-const isLoading = computed(() => hostStore.isLoading || !isStatFetched.value);
+const isLoading = computed(() => isFetching.value || !isStatFetched.value);
 
 const customValueFormatter = (value: number) => `${value}%`;
 </script>

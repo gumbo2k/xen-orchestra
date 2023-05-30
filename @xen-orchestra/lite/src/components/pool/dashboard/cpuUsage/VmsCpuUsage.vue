@@ -20,6 +20,8 @@ import { N_ITEMS } from "@/views/pool/PoolDashboardView.vue";
 import NoDataError from "@/components/NoDataError.vue";
 import { useVmStore } from "@/stores/vm.store";
 
+const TITLE_LEVEL = 2;
+
 const { hasError } = useVmStore().subscribe();
 
 const stats = inject<ComputedRef<Stat<VmStats>[]>>(

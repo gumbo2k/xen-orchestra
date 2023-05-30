@@ -1,8 +1,9 @@
 <template>
   <UiCardTitle
+    class="subtitle"
+    :level="TITLE_LEVEL"
     :left="$t('hosts')"
     :right="$t('top-#', { n: N_ITEMS })"
-    subtitle
   />
   <NoDataError v-if="hasError" />
   <UsageBar v-else :data="statFetched ? data : undefined" :n-items="N_ITEMS" />
@@ -18,6 +19,8 @@ import { useHostStore } from "@/stores/host.store";
 import { N_ITEMS } from "@/views/pool/PoolDashboardView.vue";
 import { computed, type ComputedRef, inject } from "vue";
 import NoDataError from "@/components/NoDataError.vue";
+
+const TITLE_LEVEL = 2;
 
 const { hasError } = useHostStore().subscribe();
 

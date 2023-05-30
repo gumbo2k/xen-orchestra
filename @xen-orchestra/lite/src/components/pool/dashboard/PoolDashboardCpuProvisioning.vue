@@ -1,6 +1,6 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
-    <UiCardTitle>
+    <UiCardTitle class="title">
       {{ $t("cpu-provisioning") }}
       <template v-if="!hasError" #right>
         <!-- TODO: add a tooltip for the warning icon -->

@@ -37,8 +37,7 @@ const SUBTITLE_LEVEL = 3;
 
 const { t } = useI18n();
 
-const hostStore = useHostStore();
-const { hasError } = storeToRefs(hostStore);
+const { hasError, isFetching } = useHostStore().subscribe();
 
 const hostLastWeekStats =
   inject<FetchedStats<XenApiHost, HostStats>>("hostLastWeekStats");
@@ -113,7 +112,7 @@ const isStatFetched = computed(() => {
   });
 });
 
-const isLoading = computed(() => hostStore.isLoading || !isStatFetched.value);
+const isLoading = computed(() => isFetching.value || !isStatFetched.value);
 
 // TODO: improve the way to get the max value of graph
 // See: https://github.com/vatesfr/xen-orchestra/pull/6610/files#r1072237279

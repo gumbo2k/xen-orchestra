@@ -1,6 +1,6 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
-    <UiCardTitle>{{ $t("status") }}</UiCardTitle>
+    <UiCardTitle class="title">{{ $t("status") }}</UiCardTitle>
     <NoDataError v-if="hasError" />
     <UiCardSpinner v-else-if="!isReady" />
     <template v-else>
