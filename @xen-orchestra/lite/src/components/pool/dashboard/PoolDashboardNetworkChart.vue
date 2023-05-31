@@ -1,7 +1,7 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("network-throughput") }}</UiCardTitle>
-    <UiCardTitle :subtitleClass="'subtitle'" :level="SUBTITLE_LEVEL">
+    <UiCardTitle subtitleClass="subtitle" :level="SUBTITLE_LEVEL">
       {{ $t("last-week") }}
     </UiCardTitle>
     <NoDataError v-if="hasError" />
