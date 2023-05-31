@@ -23,7 +23,7 @@ withDefaults(
     level?: number;
     left?: string;
     right?: string;
-    subtitleClass?: string;
+    subtitleClass?: 'subtitle' | 'subtitle-with-underline';
   }>(),
   { level: 1 }
 );
