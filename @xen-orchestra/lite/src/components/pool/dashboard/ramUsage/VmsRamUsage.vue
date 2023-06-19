@@ -1,7 +1,6 @@
 <template>
   <UiCardTitle
-    subtitleClass="subtitle-with-underline"
-    :level="TITLE_LEVEL"
+    :level="HEADING_LEVEL.SUBTITLE_WITH_UNERLINE"
     :left="$t('vms')"
     :right="$t('top-#', { n: N_ITEMS })"
   />
@@ -15,12 +14,11 @@ import { type ComputedRef, computed, inject } from "vue";
 import UsageBar from "@/components/UsageBar.vue";
 import type { Stat } from "@/composables/fetch-stats.composable";
 import { formatSize, parseRamUsage } from "@/libs/utils";
+import { HEADING_LEVEL } from "@/components/enums";
 import type { VmStats } from "@/libs/xapi-stats";
 import { N_ITEMS } from "@/views/pool/PoolDashboardView.vue";
 import NoDataError from "@/components/NoDataError.vue";
 import { useVmStore } from "@/stores/vm.store";
-
-const TITLE_LEVEL = 2;
 
 const { hasError } = useVmStore().subscribe();
 

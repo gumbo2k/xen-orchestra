@@ -1,14 +1,28 @@
 <template>
-  <div :class="[subtitleClass, 'ui-section-title']">
+  <div
+    :class="[
+      'ui-section-title',
+      level === HEADING_LEVEL.SUBTITLE ? 'subtitle' : '',
+      level === HEADING_LEVEL.SUBTITLE_WITH_UNERLINE
+        ? 'subtitle-with-underline'
+        : '',
+    ]"
+  >
     <component
-      :is="level === 1 ? 'h4' : level === 2 ? 'h5' : 'h6'"
+      :is="
+        level === HEADING_LEVEL.TITLE
+          ? 'h4'
+          : HEADING_LEVEL.SUBTITLE_WITH_UNERLINE
+          ? 'h5'
+          : 'h6'
+      "
       v-if="$slots.default || left"
       class="left"
     >
       <slot>{{ left }}</slot>
     </component>
     <component
-      :is="level === 1 ? 'h5' : 'h6'"
+      :is="level === HEADING_LEVEL.TITLE ? 'h5' : 'h6'"
       v-if="$slots.right || right"
       class="right"
     >
@@ -18,14 +32,15 @@
 </template>
 
 <script lang="ts" setup>
+import { HEADING_LEVEL } from "@/components/enums";
+
 withDefaults(
   defineProps<{
-    level?: number;
+    level?: HEADING_LEVEL;
     left?: string;
     right?: string;
-    subtitleClass?: 'subtitle' | 'subtitle-with-underline';
   }>(),
-  { level: 1 }
+  { level: HEADING_LEVEL.TITLE }
 );
 </script>
 

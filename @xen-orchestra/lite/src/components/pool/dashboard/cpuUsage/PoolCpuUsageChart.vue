@@ -1,7 +1,7 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("pool-cpu-usage") }}</UiCardTitle>
-    <UiCardTitle subtitleClass="subtitle" :level="SUBTITLE_LEVEL">
+    <UiCardTitle :level="HEADING_LEVEL.SUBTITLE">
       {{ $t("last-week") }}
     </UiCardTitle>
     <NoDataError v-if="hasError" />
@@ -18,6 +18,7 @@
 <script lang="ts" setup>
 import { computed, inject } from "vue";
 import type { FetchedStats } from "@/composables/fetch-stats.composable";
+import { HEADING_LEVEL } from "@/components/enums";
 import type { HostStats } from "@/libs/xapi-stats";
 import { sumBy } from "lodash-es";
 import LinearChart from "@/components/charts/LinearChart.vue";
@@ -30,8 +31,6 @@ import { useHostStore } from "@/stores/host.store";
 import { useI18n } from "vue-i18n";
 import UiCardSpinner from "@/components/ui/UiCardSpinner.vue";
 import type { XenApiHost } from "@/libs/xen-api";
-
-const SUBTITLE_LEVEL = 3;
 
 const { t } = useI18n();
 
