@@ -1,6 +1,6 @@
 <template>
   <UiCard :color="hasError ? 'error' : undefined">
-    <UiCardTitle class="title">{{ $t("status") }}</UiCardTitle>
+    <UiCardTitle>{{ $t("status") }}</UiCardTitle>
     <NoDataError v-if="hasError" />
     <UiCardSpinner v-else-if="!isReady" />
     <template v-else>
@@ -57,9 +57,3 @@ const totalVmsCount = computed(() => vms.value.length);
 
 const activeVmsCount = computed(() => runningVms.value.length);
 </script>
-
-<style lang="postcss" scoped>
-.title {
-  margin-bottom: 2rem;
-}
-</style>
