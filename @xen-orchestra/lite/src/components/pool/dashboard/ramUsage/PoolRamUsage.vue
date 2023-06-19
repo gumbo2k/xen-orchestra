@@ -11,11 +11,8 @@
       :data="data"
       :max-value="customMaxValue"
       :value-formatter="customValueFormatter"
-    >
-      <template>
-        <SizeStatsSummary :size="currentData.size" :usage="currentData.usage" />
-      </template>
-    </LinearChart>
+    />
+    <SizeStatsSummary :size="currentData.size" :usage="currentData.usage" />
   </UiCard>
 </template>
 
