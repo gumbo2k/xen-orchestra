@@ -1,6 +1,6 @@
 <template>
   <UiCardTitle
-    :level="HEADING_LEVEL.SUBTITLE_WITH_UNERLINE"
+    :level="HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE"
     :left="$t('vms')"
     :right="$t('top-#', { n: N_ITEMS })"
   />

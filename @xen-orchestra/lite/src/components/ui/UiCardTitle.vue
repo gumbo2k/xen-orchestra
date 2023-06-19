@@ -3,7 +3,7 @@
     :class="[
       'ui-section-title',
       level === HEADING_LEVEL.SUBTITLE ? 'subtitle' : '',
-      level === HEADING_LEVEL.SUBTITLE_WITH_UNERLINE
+      level === HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE
         ? 'subtitle-with-underline'
         : '',
     ]"
@@ -12,7 +12,7 @@
       :is="
         level === HEADING_LEVEL.TITLE
           ? 'h4'
-          : HEADING_LEVEL.SUBTITLE_WITH_UNERLINE
+          : HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE
           ? 'h5'
           : 'h6'
       "
