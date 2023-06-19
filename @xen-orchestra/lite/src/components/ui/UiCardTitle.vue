@@ -2,17 +2,17 @@
   <div
     :class="[
       'ui-section-title',
-      level === HEADING_LEVEL.SUBTITLE ? 'subtitle' : '',
-      level === HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE
+      level === UI_CARD_TITLE_LEVEL.SUBTITLE ? 'subtitle' : '',
+      level === UI_CARD_TITLE_LEVEL.SUBTITLE_WITH_UNDERLINE
         ? 'subtitle-with-underline'
         : '',
     ]"
   >
     <component
       :is="
-        level === HEADING_LEVEL.TITLE
+        level === UI_CARD_TITLE_LEVEL.TITLE
           ? 'h4'
-          : HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE
+          : UI_CARD_TITLE_LEVEL.SUBTITLE_WITH_UNDERLINE
           ? 'h5'
           : 'h6'
       "
@@ -22,7 +22,7 @@
       <slot>{{ left }}</slot>
     </component>
     <component
-      :is="level === HEADING_LEVEL.TITLE ? 'h5' : 'h6'"
+      :is="level === UI_CARD_TITLE_LEVEL.TITLE ? 'h5' : 'h6'"
       v-if="$slots.right || right"
       class="right"
     >
@@ -32,15 +32,15 @@
 </template>
 
 <script lang="ts" setup>
-import { HEADING_LEVEL } from "@/components/enums";
+import { UI_CARD_TITLE_LEVEL } from "@/components/enums";
 
 withDefaults(
   defineProps<{
-    level?: HEADING_LEVEL;
+    level?: UI_CARD_TITLE_LEVEL;
     left?: string;
     right?: string;
   }>(),
-  { level: HEADING_LEVEL.TITLE }
+  { level: UI_CARD_TITLE_LEVEL.TITLE }
 );
 </script>
 

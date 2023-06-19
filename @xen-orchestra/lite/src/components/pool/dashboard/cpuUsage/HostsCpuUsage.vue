@@ -1,6 +1,6 @@
 <template>
   <UiCardTitle
-    :level="HEADING_LEVEL.SUBTITLE_WITH_UNDERLINE"
+    :level="UI_CARD_TITLE_LEVEL.SUBTITLE_WITH_UNDERLINE"
     :left="$t('hosts')"
     :right="$t('top-#', { n: N_ITEMS })"
   />
@@ -13,8 +13,8 @@ import UiCardTitle from "@/components/ui/UiCardTitle.vue";
 import UsageBar from "@/components/UsageBar.vue";
 import type { Stat } from "@/composables/fetch-stats.composable";
 import { getAvgCpuUsage } from "@/libs/utils";
-import { HEADING_LEVEL } from "@/components/enums";
 import type { HostStats } from "@/libs/xapi-stats";
+import { UI_CARD_TITLE_LEVEL } from "@/components/enums";
 import { useHostStore } from "@/stores/host.store";
 import { N_ITEMS } from "@/views/pool/PoolDashboardView.vue";
 import { computed, type ComputedRef, inject } from "vue";

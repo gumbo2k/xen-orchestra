@@ -1,7 +1,7 @@
 <template>
   <UiCard class="linear-chart" :color="hasError ? 'error' : undefined">
     <UiCardTitle>{{ $t("pool-ram-usage") }}</UiCardTitle>
-    <UiCardTitle :level="HEADING_LEVEL.SUBTITLE">
+    <UiCardTitle :level="UI_CARD_TITLE_LEVEL.SUBTITLE">
       {{ $t("last-week") }}
     </UiCardTitle>
     <NoDataError v-if="hasError" />
@@ -24,7 +24,7 @@ import LinearChart from "@/components/charts/LinearChart.vue";
 import SizeStatsSummary from "@/components/ui/SizeStatsSummary.vue";
 import type { FetchedStats } from "@/composables/fetch-stats.composable";
 import { formatSize, getHostMemory } from "@/libs/utils";
-import { HEADING_LEVEL } from "@/components/enums";
+import { UI_CARD_TITLE_LEVEL } from "@/components/enums";
 import type { HostStats } from "@/libs/xapi-stats";
 import NoDataError from "@/components/NoDataError.vue";
 import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
