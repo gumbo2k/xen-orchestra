@@ -89,7 +89,7 @@ const data = computed<LinearChartData>(() => {
 });
 const isStatFetched = computed(() => {
   const stats = hostLastWeekStats?.stats?.value;
-  if (stats == null) {
+  if (stats === undefined) {
     return false;
   }
 

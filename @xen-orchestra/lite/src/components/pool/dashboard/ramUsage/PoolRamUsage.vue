@@ -12,7 +12,7 @@
       :max-value="customMaxValue"
       :value-formatter="customValueFormatter"
     >
-      <template #summary>
+      <template>
         <SizeStatsSummary :size="currentData.size" :usage="currentData.usage" />
       </template>
     </LinearChart>
@@ -110,7 +110,7 @@ const data = computed<LinearChartData>(() => {
 
 const isStatFetched = computed(() => {
   const stats = hostLastWeekStats?.stats?.value;
-  if (stats == null) {
+  if (stats === undefined) {
     return false;
   }
 
