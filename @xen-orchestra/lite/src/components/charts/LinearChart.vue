@@ -1,6 +1,5 @@
 <template>
   <VueCharts :option="option" autoresize class="chart" />
-  <slot name="summary" />
 </template>
 
 <script lang="ts" setup>

@@ -41,8 +41,6 @@ import { useI18n } from "vue-i18n";
 
 const hostMetricsSubscription = useHostMetricsStore().subscribe();
 
-const SUBTITLE_LEVEL = 2;
-
 const hostStore = useHostStore();
 const { runningHosts, isFetching, hasError } = hostStore.subscribe({
   hostMetricsSubscription,
