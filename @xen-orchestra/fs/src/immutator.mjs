@@ -1,6 +1,6 @@
 
-import {resolve} from 'node:path'
 import fs from 'node:fs/promises'
+import path from 'node:path'
 
 import execa from 'execa'
 
@@ -15,14 +15,15 @@ async function resolveAlias(aliasPath){
     throw new Error(`The alias file ${aliasPath} is too big (${size} bytes)`)
     }
     const aliasContent = (await fs.readFile(aliasPath)).toString().trim()
-    return resolve(aliasPath,aliasContent )
+    return path.resolve(aliasPath,aliasContent )
 } 
 
-const makeFileImmutable = async (path) => execa('chattr', ['-i', path])
-const makeDirectoryImmutable = async (path) => execa('chattr', ['-i', '-R', path])
+const makeFileImmutable = async (path) => execa('chattr', ['+i', path])
+const makeDirectoryImmutable = async (path) => execa('chattr', ['+i', '-R', path])
 
 
 async function makeVhdImmutable(vhdPath){
+    console.log('Make vhd immutable')
     await makeFileImmutable(vhdPath)
     // also make the target immutable
     if(vhdPath.endsWith('.alias.vhd')){
@@ -32,28 +33,36 @@ async function makeVhdImmutable(vhdPath){
 }
 
 
-async function makeImmutable(link){
+async function makeVmBackupImmutable(metdataPath){
     try{
-        const path = await resolveAlias(link)
-        const metadata = JSON.parse(await fs.readFile(path))
+        const metadataDir = path.dirname(metdataPath)
+        const metadata = JSON.parse(await fs.readFile(metdataPath))
         if(metadata.xva !== undefined){
-            await makeFileImmutable(path.resolve(path, metadata.xva))
+            console.log('make xva immutable ',path.resolve(metadataDir, metadata.xva))
+            await makeFileImmutable(path.resolve(metadataDir, metadata.xva))
+            await makeFileImmutable(path.resolve(metadataDir, metadata.xva+'.checksum'))
         } else if(metadata.vhds !== undefined){
             for(const vhd of Object.values(metadata.vhds)){
-                await makeVhdImmutable(path.resolve(path, vhd))
+                console.log('make vhd immutable ',path.resolve(metadataDir, vhd))
+                await makeVhdImmutable(path.resolve(metadataDir, vhd))
             }
         } else {
             throw new Error('File is not a metadata')
         }
+        console.log('patch metadata')
+        // update metadata
         metadata.immutableSince = + new Date()
         metadata.immutable = true// write new metadata
-        await fs.writeFile(path, JSON.stringify(metadata))
-        // cache is stale
-        await fs.unlink(resolve(path, './cache.json.gz'))
+        console.log('write metadata')
+        await fs.writeFile(metdataPath, JSON.stringify(metadata))
+        console.log('make metadata immutable')
+        await makeFileImmutable(metdataPath)
+        // cache is stale, kill it
+        console.log('snipe cache')
+        await fs.unlink(path.resolve(metadataDir, 'cache.json.gz'))
 
-        // mark this as done
-        await fs.unlink(link)
     }catch(err){
+        console.warn(err)
         // rename event is also launched on deletion
         if(err.code !== 'ENOENT'){
             throw err
@@ -63,48 +72,91 @@ async function makeImmutable(link){
 }
 
 
-async function watchVmDirectory(remotePath, vmPath){
+async function watchVmDirectory(vmPath){
+    if(vmPath.endsWith('.lock')){
+        console.log(vmPath, ' is lock dir, skip')
+        return 
+    }
+    console.log('watchVmDirectory', vmPath)
     try {
-        const watcher = fs.watch(remotePath+'/'+vmPath);
+        const watcher = fs.watch(vmPath);
         for await (const {eventType, filename} of watcher){
+            if(eventType === 'change'){
+                continue
+            }
+            if(filename.startsWith('.')){
+                // temp file during upload
+                continue
+            }
             console.log({eventType, filename})
             // ignore modified metadata (merge , became immutable , deleted  )
 
             if(filename.endsWith('.json')){
-                const stat = await fs.stat(filename)
-                if(stat.ctime === stat.mtime){
+                console.log('is json')
+                const stat = await fs.stat(path.join(vmPath,filename))
+                if(stat.ctimeMs === stat.mtimeMs){
+                    console.log('just created')
                     // only make immutable unmodified files
-                    await makeImmutable(filename)
+                    await makeVmBackupImmutable(path.join(vmPath,filename))
                 }
             }
         } 
     }
       catch (err) {
+        console.warn(err)
         // must not throw and stop the script
         // throw err;
+        if(err.code !== 'ENOENT' && err.code !== 'EPERM' /* demete on windows */){
+            watchVmDirectory(vmPath)
+        }
       }
 }
-async function watchRemote(remotePath){
-    
-    // watch new VM 
-    const watcher = fs.watch(remotePath, { signal });
-    for await (const {eventType, filename} of watcher){
-        console.log({eventType, filename})
-        watchVmDirectory(remotePath, filename)
-            .catch(()=>{})
-    } 
 
-    // also watch existing VM
-    const vms = await fs.readDir(remotePath)
-    for(const vm of vms){
-        watchVmDirectory(remotePath, vm)
-            .catch(()=>{})
+
+async function watchForNewVm(vmPath){
+    // watch new VM 
+    try{
+
+        const watcher = fs.watch(vmPath);
+        for await (const {filename} of watcher){
+            watchVmDirectory(path.join(vmPath, filename))
+                .catch(()=>{})
+        } 
+    }catch(err){
+        console.warn(err)
+        // must not throw and stop the script
+        // throw err;
+        if(err.code !== 'ENOENT'){
+            // relaunch watcher on error
+            watchVmDirectory(vmPath)
+        }
+
     }
 }
 
+async function watchVmRemote(remotePath){
+    const vmPath = path.join(remotePath, 'xo-vm-backups')
+    console.log(vmPath)
+
+    watchForNewVm(vmPath).catch(()=>{})
+
+    // watch existing VM
+    const vms = await fs.readdir(vmPath)
+    console.log({vms})
+    for(const vm of vms){
+        console.log('watch ', vm)
+        watchVmDirectory(path.join(vmPath, vm))
+            .catch(()=>{})
+    }
 
 
-watchRemote()
+
+
+}
+
+
+
+watchVmRemote('/home/florent/Documents/remotes/nonencrypted')
 
 /**
  * Caveats : 
