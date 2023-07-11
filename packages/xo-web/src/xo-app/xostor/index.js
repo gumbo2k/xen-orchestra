@@ -5,11 +5,12 @@ import React from 'react'
 import { connectStore } from 'utils'
 import { Container, Col, Row } from 'grid'
 import { injectState, provideState } from 'reaclette'
+import { Input as DebounceInput } from 'debounce-input-decorator'
 
 import Page from '../page'
 import { SelectPool } from '../../common/select-objects'
 import { createGetObjectsOfType } from '../../common/selectors'
-import { toggleState } from '../../common/reaclette-utils'
+import { toggleState, linkState } from '../../common/reaclette-utils'
 import { Pool } from '../../common/render-xo-item'
 import ActionButton from '../../common/action-button'
 import Icon from 'icon'
@@ -46,9 +47,12 @@ export default decorate([
       onlyShowXostorePools: false, // @TODO: Default to true
       poolId: undefined,
       hostsPool: [],
+      srName: '',
+      srDescription: '',
     }),
     effects: {
       toggleState,
+      linkState,
       onChange: function (_, pool) {
         return { poolId: pool.id, hostsPool: Object.values(this.props.hostsByPoolId[pool.id]) }
       },
@@ -80,6 +84,22 @@ export default decorate([
     return (
       <Page header={HEADER}>
         <Container>
+          {/* SR */}
+          <Row className='mb-1'>
+            <Col size={6}>
+              {_('name')}
+              <DebounceInput className='form-control' onChange={effects.linkState} name='srName' value={state.srName} />
+            </Col>
+            <Col size={6}>
+              {_('description')}
+              <DebounceInput
+                className='form-control'
+                onChange={effects.linkState}
+                name='srDescription'
+                value={state.srDescription}
+              />
+            </Col>
+          </Row>
           {/* Pool Selector */}
           <div className='mb-1'>
             <label>
@@ -108,7 +128,7 @@ export default decorate([
             )}
           </div>
           {/* Install packages */}
-          <div>
+          <div className='mb-1'>
             <em>
               <Icon icon='info' /> On each hosts, "xcp-ng-release-linstor" and "xcp-ng-linstor" will be installed. You
               also can install them manually
