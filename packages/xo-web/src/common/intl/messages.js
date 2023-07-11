@@ -206,6 +206,7 @@ const messages = {
   newServerPage: 'Server',
   newImport: 'Import',
   xosan: 'XOSAN',
+  xostor: 'XOSTOR',
   backupOverviewPage: 'Overview',
   backupNewPage: 'New',
   backupRemotesPage: 'Remotes',
