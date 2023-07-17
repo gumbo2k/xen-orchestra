@@ -21,7 +21,7 @@ import { find, first, includes, map, remove, size } from 'lodash'
 import { getBlockDevicesByHost } from 'xo'
 import { formatSize } from '../../common/utils'
 import { Card, CardBlock, CardHeader } from 'card'
-import { Number } from 'form'
+import { Number as NumberInput } from 'form'
 
 const N_HOSTS_MIN = 3
 const N_HOSTS_MAX = 7
@@ -56,7 +56,7 @@ export default decorate([
   }),
   provideState({
     initialState: () => ({
-      onlyShowXostorePools: false, // @TODO: Default to true
+      onlyShowXostorePools: true,
       poolId: undefined,
       hostsPool: [],
       srName: '',
@@ -98,72 +98,93 @@ export default decorate([
       <Page header={HEADER}>
         <Container>
           {/* SR */}
-          <Row className='mb-1'>
+          <Row>
             <Col size={6}>
-              {_('name')}
-              <DebounceInput className='form-control' onChange={effects.linkState} name='srName' value={state.srName} />
+              <Card>
+                <CardHeader>Storage</CardHeader>
+                <CardBlock>
+                  <Row className='mb-1'>
+                    <Col size={6}>
+                      {_('name')}
+                      <DebounceInput
+                        className='form-control'
+                        onChange={effects.linkState}
+                        name='srName'
+                        value={state.srName}
+                      />
+                    </Col>
+                    <Col size={6}>
+                      {_('description')}
+                      <DebounceInput
+                        className='form-control'
+                        onChange={effects.linkState}
+                        name='srDescription'
+                        value={state.srDescription}
+                      />
+                    </Col>
+                  </Row>
+                </CardBlock>
+              </Card>
             </Col>
             <Col size={6}>
-              {_('description')}
-              <DebounceInput
-                className='form-control'
-                onChange={effects.linkState}
-                name='srDescription'
-                value={state.srDescription}
-              />
+              <SettingsSection />
             </Col>
           </Row>
-          {/* Pool Selector */}
-          <div className='mb-1'>
-            <label>
-              <input
-                type='checkbox'
-                checked={state.onlyShowXostorePools}
-                onChange={effects.toggleState}
-                name='onlyShowXostorePools'
-              />{' '}
-              Only show pools that meet XOSTOR requirements
-            </label>
-            <SelectPool predicate={state.xostorePoolPredicate} value={state.poolId} onChange={effects.onChange} />
-            {state.poolId !== undefined && !state.isPoolCompatibleXostore && (
-              <div className='text-danger'>
-                {/* @TODO: add href */}
-                <p className='mb-0'>
-                  <Pool id={state.poolId} link /> does not meet the requirements for XOSTOR. Refer to the{' '}
-                  <a href='#'>documentation</a>
-                </p>
-                <ul>
-                  {!state.isXcpngPool && <li>Not an XCP-ng pool</li>}
-                  {!state.isPoolGoodNumberOfHosts && <li>Wrong number of hosts</li>}
-                  {state.poolAlreadyHasXostore && <li>Already have a XOSTOR storage</li>}
-                </ul>
+
+          <Card>
+            <CardHeader>Pool</CardHeader>
+            <CardBlock>
+              <div className='mb-1'>
+                <label>
+                  <input
+                    type='checkbox'
+                    checked={state.onlyShowXostorePools}
+                    onChange={effects.toggleState}
+                    name='onlyShowXostorePools'
+                  />{' '}
+                  Only show pools that meet XOSTOR requirements
+                </label>
+                <SelectPool predicate={state.xostorePoolPredicate} value={state.poolId} onChange={effects.onChange} />
+                {state.poolId !== undefined && !state.isPoolCompatibleXostore && (
+                  <div className='text-danger'>
+                    {/* @TODO: add href */}
+                    <p className='mb-0'>
+                      <Pool id={state.poolId} link /> does not meet the requirements for XOSTOR. Refer to the{' '}
+                      <a href='#'>documentation</a>
+                    </p>
+                    <ul>
+                      {!state.isXcpngPool && <li>Not an XCP-ng pool</li>}
+                      {!state.isPoolGoodNumberOfHosts && <li>Wrong number of hosts</li>}
+                      {state.poolAlreadyHasXostore && <li>Already have a XOSTOR storage</li>}
+                    </ul>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {/* Install packages */}
-          <div className='mb-1'>
-            <em>
-              <Icon icon='info' /> On each hosts, "xcp-ng-release-linstor" and "xcp-ng-linstor" will be installed. You
-              also can install them manually
-            </em>
-            <br />
-            <ActionButton
-              btnStyle='primary'
-              disabled={!state.isPoolCompatibleXostore || !state.hostsIsMissingPackages}
-              tooltip={
-                !state.isPoolCompatibleXostore
-                  ? 'Invalid pool'
-                  : !state.hostsIsMissingPackages
-                  ? 'Hosts already have packages'
-                  : undefined
-              }
-              icon='menu-xosan'
-            >
-              Install packages
-            </ActionButton>
-          </div>
+              {/* Install packages */}
+              <div className='mb-1'>
+                <em>
+                  <Icon icon='info' /> On each hosts, "xcp-ng-release-linstor" and "xcp-ng-linstor" will be installed.
+                  You also can install them manually
+                </em>
+                <br />
+                <ActionButton
+                  btnStyle='primary'
+                  disabled={!state.isPoolCompatibleXostore || !state.hostsIsMissingPackages}
+                  tooltip={
+                    !state.isPoolCompatibleXostore
+                      ? 'Invalid pool'
+                      : !state.hostsIsMissingPackages
+                      ? 'Hosts already have packages'
+                      : undefined
+                  }
+                  icon='menu-xosan'
+                >
+                  Install packages
+                </ActionButton>
+              </div>
+            </CardBlock>
+          </Card>
           <DisksSection hosts={state.hostsPool} poolId={state.poolId} />
-          <SettingsSection />
         </Container>
       </Page>
     )
@@ -221,6 +242,7 @@ const DisksSection = decorate([
         return onlyShowXostorDisks ? blockdevices?.filter(xostoreDiskPredicate) : blockdevices
       },
       unselectedDisks: function ({ disks, disksByHost, selectedHostId }) {
+        console.log('triggered')
         return disks
           ?.filter(disk => !disksByHost[selectedHostId]?.some(_disk => _disk.name === disk.name))
           .sort((a, b) => Number(b.size) - Number(a.size))
@@ -229,10 +251,11 @@ const DisksSection = decorate([
   }),
   injectState,
   ({ effects, state }) => {
+    console.log(state.disks)
     return (
-      <div>
-        <h3>Disks</h3>
-        <div style={{ border: '2px solid black', padding: '10px' }}>
+      <Card>
+        <CardHeader>Disks</CardHeader>
+        <CardBlock style={{ border: '2px solid black', padding: '10px' }}>
           <Row>
             <Col size={8}>
               <Row>
@@ -322,8 +345,8 @@ const DisksSection = decorate([
               ))}
             </Col>
           </Row>
-        </div>
-      </div>
+        </CardBlock>
+      </Card>
     )
   },
 ])
@@ -390,8 +413,8 @@ const SettingsSection = decorate([
             <label>
               <strong>Replication</strong>
             </label>
-            <Number max={3} min={1} onChange={effects.onReplicationChange} value={state.replication} />
-            {state.replication === 1 && <p className='text-warning'>If one disks dies, you lose data Message TBD</p>}
+            <NumberInput max={3} min={1} onChange={effects.onReplicationChange} value={state.replication} />
+            {state.replication === 1 && <p className='text-warning'>If one disks dies, you lose data. Message TBD</p>}
           </div>
           <div className='form-group'>
             <label>
@@ -404,8 +427,3 @@ const SettingsSection = decorate([
     )
   },
 ])
-
-/** @TODO:
- * - use card like backup form
- *
- */
