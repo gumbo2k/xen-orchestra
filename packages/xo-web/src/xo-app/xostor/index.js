@@ -20,7 +20,8 @@ import Select from '../../common/form/select'
 import { find, first, includes, map, remove, size } from 'lodash'
 import { getBlockDevicesByHost } from 'xo'
 import { formatSize } from '../../common/utils'
-import { Ul } from '../../'
+import { Card, CardBlock, CardHeader } from 'card'
+import { Number } from 'form'
 
 const N_HOSTS_MIN = 3
 const N_HOSTS_MAX = 7
@@ -162,6 +163,7 @@ export default decorate([
             </ActionButton>
           </div>
           <DisksSection hosts={state.hostsPool} poolId={state.poolId} />
+          <SettingsSection />
         </Container>
       </Page>
     )
@@ -361,3 +363,49 @@ const HostDropdown = ({ host, disks }) => {
     </Collapse>
   )
 }
+
+const PROVISIONING_MODE = [
+  { value: 'thin', label: 'Thin' },
+  { value: 'thick', label: 'Thick' },
+]
+
+const SettingsSection = decorate([
+  provideState({
+    initialState: () => ({
+      replication: undefined,
+      provisioning: PROVISIONING_MODE[0],
+    }),
+    effects: {
+      onReplicationChange: (_, v) => ({ replication: v }),
+      onProvisioningChange: (_, p) => ({ provisioning: p.value }),
+    },
+  }),
+  injectState,
+  ({ effects, state }) => {
+    return (
+      <Card>
+        <CardHeader>Settings</CardHeader>
+        <CardBlock>
+          <div className='form-group'>
+            <label>
+              <strong>Replication</strong>
+            </label>
+            <Number max={3} min={1} onChange={effects.onReplicationChange} value={state.replication} />
+            {state.replication === 1 && <p className='text-warning'>If one disks dies, you lose data Message TBD</p>}
+          </div>
+          <div className='form-group'>
+            <label>
+              <strong>Provisioning</strong>
+            </label>
+            <Select options={PROVISIONING_MODE} onChange={effects.onProvisioningChange} value={state.provisioning} />
+          </div>
+        </CardBlock>
+      </Card>
+    )
+  },
+])
+
+/** @TODO:
+ * - use card like backup form
+ *
+ */
