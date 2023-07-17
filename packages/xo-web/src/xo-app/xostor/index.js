@@ -8,23 +8,34 @@ import { injectState, provideState } from 'reaclette'
 import { Input as DebounceInput } from 'debounce-input-decorator'
 
 import Page from '../page'
-import { SelectPool } from '../../common/select-objects'
+import { SelectHost, SelectPool } from '../../common/select-objects'
 import { createGetObjectsOfType } from '../../common/selectors'
 import { toggleState, linkState } from '../../common/reaclette-utils'
-import { Pool } from '../../common/render-xo-item'
+import { Host, Pool } from '../../common/render-xo-item'
 import ActionButton from '../../common/action-button'
 import Icon from 'icon'
+import Collapse from '../../common/collapse'
+import { hostMultipathingPaths, pool } from '../../common/intl/messages'
+import Select from '../../common/form/select'
+import { find, first, includes, map, remove, size } from 'lodash'
+import { getBlockDevicesByHost } from 'xo'
+import { formatSize } from '../../common/utils'
+import { Ul } from '../../'
 
 const N_HOSTS_MIN = 3
 const N_HOSTS_MAX = 7
 
 // ===================================================================
 
-const alreadyHasXostore = () => false // @TODO: Check is xostore already exist in the pool
+const alreadyHasXostore = () => false // @TODO: Check is xostore already exist in the pool. See with Ronan if the limitation is still required
 
-const isGoodNumberOfHosts = hosts => hosts.length >= N_HOSTS_MIN && hosts.length <= N_HOSTS_MAX
+const isGoodNumberOfHosts = hosts => size(hosts) >= N_HOSTS_MIN && size(hosts) <= N_HOSTS_MAX
 
 const isXcpngPool = host => host.productBrand === 'XCP-ng'
+
+const xostoreDiskPredicate = disk => disk.type === 'disk' && disk.ro === '0' && disk.mountpoint === '' // @TODO: Accpect disk.type 'raid[...]'
+
+const formatDiskName = name => '/dev/' + name
 
 // ===================================================================
 
@@ -39,7 +50,7 @@ const HEADER = (
 export default decorate([
   connectStore(() => {
     return {
-      hostsByPoolId: createGetObjectsOfType('host').groupBy('$pool'),
+      hostsByPoolId: createGetObjectsOfType('host').sort().groupBy('$pool'),
     }
   }),
   provideState({
@@ -54,7 +65,7 @@ export default decorate([
       toggleState,
       linkState,
       onChange: function (_, pool) {
-        return { poolId: pool.id, hostsPool: Object.values(this.props.hostsByPoolId[pool.id]) }
+        return { poolId: pool.id, hostsPool: this.props.hostsByPoolId[pool.id] }
       },
     },
     computed: {
@@ -64,12 +75,13 @@ export default decorate([
         if (!state.onlyShowXostorePools) {
           return true
         }
-        const hostsPool = Object.values(props.hostsByPoolId[pool.id])
-        return isGoodNumberOfHosts(hostsPool) && isXcpngPool(hostsPool[0]) && !alreadyHasXostore()
+
+        const hostsPool = props.hostsByPoolId[pool.id]
+        return isGoodNumberOfHosts(hostsPool) && isXcpngPool(first(hostsPool)) && !alreadyHasXostore()
       },
 
       // Selected Pool ===========================================================
-      isXcpngPool: state => isXcpngPool(state.hostsPool[0]),
+      isXcpngPool: state => isXcpngPool(first(state.hostsPool)),
       isPoolGoodNumberOfHosts: state => isGoodNumberOfHosts(state.hostsPool),
       poolAlreadyHasXostore: () => alreadyHasXostore(),
       isPoolCompatibleXostore: state =>
@@ -149,8 +161,203 @@ export default decorate([
               Install packages
             </ActionButton>
           </div>
+          <DisksSection hosts={state.hostsPool} poolId={state.poolId} />
         </Container>
       </Page>
     )
   },
 ])
+
+const DisksSection = decorate([
+  provideState({
+    initialState: () => ({
+      onlyShowXostorDisks: true,
+      disksByHost: {},
+      selectedHostId: undefined,
+    }),
+    effects: {
+      handleHostChange: function (_, host) {
+        this.state.selectedHostId = host.id
+      },
+      handleDiskChange: function (_, disk) {
+        return state => {
+          const disksOfTheHost = state.disksByHost[state.selectedHostId] ?? []
+          disksOfTheHost.push(disk)
+          return {
+            disksByHost: {
+              ...state.disksByHost,
+              [state.selectedHostId]: disksOfTheHost,
+            },
+          }
+        }
+      },
+      removeDisk: function (_, disk) {
+        return state => {
+          const disksOfTheHost = state.disksByHost[state.selectedHostId] ?? []
+          remove(disksOfTheHost, _disk => _disk.name === disk.name)
+          return {
+            disksByHost: {
+              ...state.disksByHost,
+              [state.selectedHostId]: disksOfTheHost,
+            },
+          }
+        }
+      },
+      toggleState,
+    },
+    computed: {
+      hostPredicate: function ({ poolId }) {
+        return host => host.$pool === poolId
+      },
+      blockdevices: async function ({ selectedHostId }) {
+        if (selectedHostId === undefined) {
+          return
+        }
+        return (await getBlockDevicesByHost(selectedHostId)).blockdevices
+      },
+      disks: async function ({ blockdevices, onlyShowXostorDisks }) {
+        return onlyShowXostorDisks ? blockdevices?.filter(xostoreDiskPredicate) : blockdevices
+      },
+      unselectedDisks: function ({ disks, disksByHost, selectedHostId }) {
+        return disks
+          ?.filter(disk => !disksByHost[selectedHostId]?.some(_disk => _disk.name === disk.name))
+          .sort((a, b) => Number(b.size) - Number(a.size))
+      },
+    },
+  }),
+  injectState,
+  ({ effects, state }) => {
+    return (
+      <div>
+        <h3>Disks</h3>
+        <div style={{ border: '2px solid black', padding: '10px' }}>
+          <Row>
+            <Col size={8}>
+              <Row>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                  }}
+                >
+                  <Col size={6}>
+                    <div>
+                      <SelectHost
+                        className='align-bottom'
+                        onChange={effects.handleHostChange}
+                        value={state.selectedHostId}
+                        predicate={state.hostPredicate}
+                      />
+                    </div>
+                  </Col>
+                  <Col size={6}>
+                    <label>
+                      <input
+                        type='checkbox'
+                        checked={state.onlyShowXostorDisks}
+                        onChange={effects.toggleState}
+                        name='onlyShowXostorDisks'
+                      />{' '}
+                      Only show disks that meet XOSTOR requirements
+                    </label>
+                    <Select
+                      placeholder='Select disk(s) ...'
+                      value={null}
+                      options={state.selectedHostId === undefined ? [] : state.unselectedDisks}
+                      optionRenderer={disk => (
+                        <span>
+                          <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
+                        </span>
+                      )}
+                      onChange={effects.handleDiskChange}
+                    />
+                  </Col>
+                </div>
+              </Row>
+              <Row>
+                {state.disksByHost[state.selectedHostId] !== undefined && (
+                  <Col className='mt-1'>
+                    <ul className='list-group'>
+                      {state.disksByHost[state.selectedHostId]?.map(disk => {
+                        const diskGoodType = disk.type === 'disk'
+                        const diskRo = disk.ro === '1'
+                        const diskMounted = disk.mountpoint !== ''
+                        const isDiskValid = diskGoodType && !diskRo && !diskMounted
+                        return (
+                          <li key={disk.name} className='list-group-item'>
+                            <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
+                            <ActionButton
+                              icon='delete'
+                              size='small'
+                              btnStyle='danger'
+                              className='pull-right'
+                              handler={effects.removeDisk}
+                              handlerParam={disk}
+                            />
+                            {!isDiskValid && (
+                              <div className='text-danger'>
+                                <Icon icon='error' /> Disk incompatible with XOSTOR
+                                <ul>
+                                  {!diskGoodType && (
+                                    <li>Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}</li>
+                                  )}
+                                  {diskRo && <li>Disk is read only</li>}
+                                  {diskMounted && <li>Disk have a mountpoint</li>}
+                                </ul>
+                              </div>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </Col>
+                )}
+              </Row>
+            </Col>
+            <Col size={4}>
+              {map(state.hostsPool, host => (
+                <HostDropdown key={host.id} host={host} disks={state.disksByHost[host.id]} className='mb-1' />
+              ))}
+            </Col>
+          </Row>
+        </div>
+      </div>
+    )
+  },
+])
+
+const HostDropdown = ({ host, disks }) => {
+  return (
+    <Collapse buttonText={`(${disks?.length ?? 0}) ${host.hostname}`} className='mb-1' size='medium'>
+      <ul
+        style={{
+          padding: 0,
+        }}
+      >
+        {disks?.map(disk => {
+          const diskGoodType = disk.type === 'disk'
+          const diskRo = disk.ro === '1'
+          const diskMounted = disk.mountpoint !== ''
+          const isDiskValid = diskGoodType && !diskRo && !diskMounted
+          return (
+            <li key={disk.name} className='list-group-item'>
+              <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
+              {!isDiskValid && (
+                <div className='text-danger'>
+                  <Icon icon='error' /> Disk incompatible with XOSTOR
+                  <ul>
+                    {!diskGoodType && (
+                      <li>Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}</li>
+                    )}
+                    {diskRo && <li>Disk is read only</li>}
+                    {diskMounted && <li>Disk have a mountpoint</li>}
+                  </ul>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Collapse>
+  )
+}

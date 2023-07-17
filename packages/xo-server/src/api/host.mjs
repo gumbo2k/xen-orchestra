@@ -456,3 +456,21 @@ setControlDomainMemory.params = {
 setControlDomainMemory.resolve = {
   host: ['id', 'host', 'administrate'],
 }
+
+// -------------------------------------------------------------------
+
+export async function getBlockDevices({ host }) {
+  const xapi = this.getXapi(host)
+
+  return JSON.parse(await xapi.call('host.call_plugin', host._xapiRef, 'lsblk.py', 'list_block_devices', {}))
+
+  // @TODO: Catch errors
+}
+
+getBlockDevices.params = {
+  id: { type: 'string' },
+}
+
+getBlockDevices.resolve = {
+  host: ['id', 'host', 'administrate'],
+}

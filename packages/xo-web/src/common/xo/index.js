@@ -1869,6 +1869,8 @@ export const importDisks = (disks, sr) =>
     )
   )
 
+export const getBlockDevicesByHost = host => _call('host.getBlockDevices', { id: resolveId(host) })
+
 import ExportVmModalBody from './export-vm-modal' // eslint-disable-line import/first
 export const exportVm = async vm => {
   const { compression, format } = await confirm({
