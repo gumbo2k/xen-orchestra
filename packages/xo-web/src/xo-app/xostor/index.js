@@ -11,17 +11,24 @@ import Page from '../page'
 import { SelectHost, SelectPool } from '../../common/select-objects'
 import { createGetObjectsOfType } from '../../common/selectors'
 import { toggleState, linkState } from '../../common/reaclette-utils'
-import { Host, Pool } from '../../common/render-xo-item'
+import { Pool } from '../../common/render-xo-item'
 import ActionButton from '../../common/action-button'
 import Icon from 'icon'
 import Collapse from '../../common/collapse'
-import { hostMultipathingPaths, pool } from '../../common/intl/messages'
 import Select from '../../common/form/select'
-import { find, first, includes, map, remove, size } from 'lodash'
+import { first, map, remove, size } from 'lodash'
 import { getBlockDevicesByHost } from 'xo'
 import { formatSize } from '../../common/utils'
 import { Card, CardBlock, CardHeader } from 'card'
 import { Number as NumberInput } from 'form'
+
+/**
+ * @TODO:
+ * - Refacto
+ * - Split each section into component
+ * - parent component have main state
+ * - Define icon for xostor
+ */
 
 const N_HOSTS_MIN = 3
 const N_HOSTS_MAX = 7
@@ -61,10 +68,14 @@ export default decorate([
       hostsPool: [],
       srName: '',
       srDescription: '',
+      replication: undefined,
     }),
     effects: {
       toggleState,
       linkState,
+      onReplicationChange: function (_, v) {
+        return { replication: v }
+      },
       onChange: function (_, pool) {
         return { poolId: pool.id, hostsPool: this.props.hostsByPoolId[pool.id] }
       },
@@ -242,111 +253,181 @@ const DisksSection = decorate([
         return onlyShowXostorDisks ? blockdevices?.filter(xostoreDiskPredicate) : blockdevices
       },
       unselectedDisks: function ({ disks, disksByHost, selectedHostId }) {
-        console.log('triggered')
         return disks
           ?.filter(disk => !disksByHost[selectedHostId]?.some(_disk => _disk.name === disk.name))
           .sort((a, b) => Number(b.size) - Number(a.size))
+      },
+      minVgSize: function ({ disksByHost, replication }) {
+        const nHosts = Object.keys(disksByHost).length
+        let minVgSize = 0
+
+        Object.values(disksByHost).forEach(disks => {
+          const v = disks.reduce((acc, disk) => acc + Number(disk.size), 0)
+          if (minVgSize === 0 || v < minVgSize) {
+            minVgSize = v
+          }
+        })
+
+        return (minVgSize * nHosts) / replication
       },
     },
   }),
   injectState,
   ({ effects, state }) => {
-    console.log(state.disks)
     return (
-      <Card>
-        <CardHeader>Disks</CardHeader>
-        <CardBlock style={{ border: '2px solid black', padding: '10px' }}>
-          <Row>
-            <Col size={8}>
-              <Row>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                  }}
-                >
-                  <Col size={6}>
-                    <div>
-                      <SelectHost
-                        className='align-bottom'
-                        onChange={effects.handleHostChange}
-                        value={state.selectedHostId}
-                        predicate={state.hostPredicate}
-                      />
-                    </div>
-                  </Col>
-                  <Col size={6}>
-                    <label>
-                      <input
-                        type='checkbox'
-                        checked={state.onlyShowXostorDisks}
-                        onChange={effects.toggleState}
-                        name='onlyShowXostorDisks'
-                      />{' '}
-                      Only show disks that meet XOSTOR requirements
-                    </label>
-                    <Select
-                      placeholder='Select disk(s) ...'
-                      value={null}
-                      options={state.selectedHostId === undefined ? [] : state.unselectedDisks}
-                      optionRenderer={disk => (
-                        <span>
-                          <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
-                        </span>
-                      )}
-                      onChange={effects.handleDiskChange}
-                    />
-                  </Col>
-                </div>
-              </Row>
-              <Row>
-                {state.disksByHost[state.selectedHostId] !== undefined && (
-                  <Col className='mt-1'>
-                    <ul className='list-group'>
-                      {state.disksByHost[state.selectedHostId]?.map(disk => {
-                        const diskGoodType = disk.type === 'disk'
-                        const diskRo = disk.ro === '1'
-                        const diskMounted = disk.mountpoint !== ''
-                        const isDiskValid = diskGoodType && !diskRo && !diskMounted
-                        return (
-                          <li key={disk.name} className='list-group-item'>
+      <div>
+        <Card>
+          <CardHeader>Disks</CardHeader>
+          <CardBlock style={{ border: '2px solid black', padding: '10px' }}>
+            <Row>
+              <Col size={8}>
+                <Row>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <Col size={6}>
+                      <div>
+                        <SelectHost
+                          className='align-bottom'
+                          onChange={effects.handleHostChange}
+                          value={state.selectedHostId}
+                          predicate={state.hostPredicate}
+                        />
+                      </div>
+                    </Col>
+                    <Col size={6}>
+                      <label>
+                        <input
+                          type='checkbox'
+                          checked={state.onlyShowXostorDisks}
+                          onChange={effects.toggleState}
+                          name='onlyShowXostorDisks'
+                        />{' '}
+                        Only show disks that meet XOSTOR requirements
+                      </label>
+                      <Select
+                        placeholder='Select disk(s) ...'
+                        value={null}
+                        options={state.selectedHostId === undefined ? [] : state.unselectedDisks}
+                        optionRenderer={disk => (
+                          <span>
                             <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
-                            <ActionButton
-                              icon='delete'
-                              size='small'
-                              btnStyle='danger'
-                              className='pull-right'
-                              handler={effects.removeDisk}
-                              handlerParam={disk}
-                            />
-                            {!isDiskValid && (
-                              <div className='text-danger'>
-                                <Icon icon='error' /> Disk incompatible with XOSTOR
-                                <ul>
-                                  {!diskGoodType && (
-                                    <li>Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}</li>
-                                  )}
-                                  {diskRo && <li>Disk is read only</li>}
-                                  {diskMounted && <li>Disk have a mountpoint</li>}
-                                </ul>
-                              </div>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </Col>
+                          </span>
+                        )}
+                        onChange={effects.handleDiskChange}
+                      />
+                    </Col>
+                  </div>
+                </Row>
+                <Row>
+                  {state.disksByHost[state.selectedHostId] !== undefined && (
+                    <Col className='mt-1'>
+                      <ul className='list-group'>
+                        {state.disksByHost[state.selectedHostId]?.map(disk => {
+                          const diskGoodType = disk.type === 'disk'
+                          const diskRo = disk.ro === '1'
+                          const diskMounted = disk.mountpoint !== ''
+                          const isDiskValid = diskGoodType && !diskRo && !diskMounted
+                          return (
+                            <li key={disk.name} className='list-group-item'>
+                              <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
+                              <ActionButton
+                                icon='delete'
+                                size='small'
+                                btnStyle='danger'
+                                className='pull-right'
+                                handler={effects.removeDisk}
+                                handlerParam={disk}
+                              />
+                              {!isDiskValid && (
+                                <div className='text-danger'>
+                                  <Icon icon='error' /> Disk incompatible with XOSTOR
+                                  <ul>
+                                    {!diskGoodType && (
+                                      <li>
+                                        Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}
+                                      </li>
+                                    )}
+                                    {diskRo && <li>Disk is read only</li>}
+                                    {diskMounted && <li>Disk have a mountpoint</li>}
+                                  </ul>
+                                </div>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </Col>
+                  )}
+                </Row>
+              </Col>
+              <Col size={4}>
+                {map(state.hostsPool, host => (
+                  <HostDropdown key={host.id} host={host} disks={state.disksByHost[host.id]} className='mb-1' />
+                ))}
+              </Col>
+            </Row>
+          </CardBlock>
+        </Card>
+        <Card>
+          <CardHeader>Resume</CardHeader>
+          <CardBlock>
+            {state.replication === undefined || Object.values(state.disksByHost).every(disks => disks.length === 0) ? (
+              <div>
+                <p>Some fields are missing</p>
+                <ul>
+                  {state.replication === undefined && <li>replication is required</li>}
+                  {Object.values(state.disksByHost).every(disks => disks.length === 0) && (
+                    <li>At least one disk is required</li>
+                  )}
+                </ul>
+              </div>
+            ) : (
+              <div>
+                {/* @TODO: computed to calculate if ndisks on hosts are different  */}
+                {Object.values(state.disksByHost).some(
+                  disks => disks.length !== Object.values(state.disksByHost)[0].length
+                ) && (
+                  <p className='text-warning'>
+                    <Icon icon='warning' />
+                    Hosts do not have the same number of disks
+                  </p>
                 )}
-              </Row>
-            </Col>
-            <Col size={4}>
-              {map(state.hostsPool, host => (
-                <HostDropdown key={host.id} host={host} disks={state.disksByHost[host.id]} className='mb-1' />
-              ))}
-            </Col>
-          </Row>
-        </CardBlock>
-      </Card>
+                <Row>
+                  <Col size={6}>Name: {state.srName}</Col>
+                  <Col size={6}>Description: {state.srDescription}</Col>
+                </Row>
+                <Row>
+                  <Col size={6}>Replication: {state.replication}</Col>
+                  <Col size={6}>Provisioning: Thin</Col>
+                </Row>
+                <Row>
+                  <Col size={6}>
+                    Pool: <Pool id={state.poolId} link />
+                  </Col>
+                  <Col size={6}>Number of hosts: {Object.keys(state.disksByHost).length}</Col>
+                </Row>
+                <Row>
+                  <Col>Potential final size: {formatSize(state.minVgSize)}</Col>
+                </Row>
+              </div>
+            )}
+          </CardBlock>
+        </Card>
+        <ActionButton
+          btnStyle='primary'
+          icon='add'
+          disabled={
+            state.replication === undefined || Object.values(state.disksByHost).every(disks => disks.length === 0)
+          }
+        >
+          Create
+        </ActionButton>
+        <ActionButton icon='reset'>Reset</ActionButton>
+      </div>
     )
   },
 ])
@@ -395,11 +476,9 @@ const PROVISIONING_MODE = [
 const SettingsSection = decorate([
   provideState({
     initialState: () => ({
-      replication: undefined,
       provisioning: PROVISIONING_MODE[0],
     }),
     effects: {
-      onReplicationChange: (_, v) => ({ replication: v }),
       onProvisioningChange: (_, p) => ({ provisioning: p.value }),
     },
   }),
