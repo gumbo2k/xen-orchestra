@@ -8,19 +8,18 @@ import { injectState, provideState } from 'reaclette'
 import { Input as DebounceInput } from 'debounce-input-decorator'
 
 import Page from '../page'
-import { SelectHost, SelectPool } from '../../common/select-objects'
+import { SelectHost, SelectPool, SelectNetwork } from '../../common/select-objects'
 import { createGetObjectsOfType } from '../../common/selectors'
 import { toggleState, linkState } from '../../common/reaclette-utils'
-import { Pool } from '../../common/render-xo-item'
+import { Pool, Network } from '../../common/render-xo-item'
 import ActionButton from '../../common/action-button'
 import Icon from 'icon'
 import Collapse from '../../common/collapse'
 import Select from '../../common/form/select'
-import { first, map, remove, size } from 'lodash'
+import { find, first, map, remove, size } from 'lodash'
 import { getBlockDevicesByHost } from 'xo'
 import { formatSize } from '../../common/utils'
 import { Card, CardBlock, CardHeader } from 'card'
-import { Number as NumberInput } from 'form'
 
 /**
  * @TODO:
@@ -50,8 +49,7 @@ const formatDiskName = name => '/dev/' + name
 const HEADER = (
   <Container>
     <h2>
-      {/* @TODO: Add xostor icon */}
-      {_('xostor')}
+      <Icon icon='menu-xosan' /> {_('xostor')}
     </h2>
   </Container>
 )
@@ -59,6 +57,8 @@ export default decorate([
   connectStore(() => {
     return {
       hostsByPoolId: createGetObjectsOfType('host').sort().groupBy('$pool'),
+      networks: createGetObjectsOfType('network'),
+      pifs: createGetObjectsOfType('PIF'),
     }
   }),
   provideState({
@@ -68,7 +68,8 @@ export default decorate([
       hostsPool: [],
       srName: '',
       srDescription: '',
-      replication: undefined,
+      replication: 2,
+      networkId: undefined,
     }),
     effects: {
       toggleState,
@@ -78,6 +79,9 @@ export default decorate([
       },
       onChange: function (_, pool) {
         return { poolId: pool.id, hostsPool: this.props.hostsByPoolId[pool.id] }
+      },
+      onChangeNetwork: function (_, network) {
+        return { networkId: network.id }
       },
     },
     computed: {
@@ -101,6 +105,14 @@ export default decorate([
 
       // Hosts Pool ==============================================================
       hostsIsMissingPackages: () => true, // @TODO: Check if at least one host need to install packages
+
+      // Disks Pool ==============================================================
+      pifManagement: (state, props) => {
+        return find(props.pifs, pif => pif.$pool === state.poolId && pif.management)
+      },
+      defaultNetworkId: (state, props) => {
+        return props.networks?.[state.pifManagement?.$network]?.id
+      },
     },
   }),
   injectState,
@@ -142,59 +154,55 @@ export default decorate([
             </Col>
           </Row>
 
-          <Card>
-            <CardHeader>Pool</CardHeader>
-            <CardBlock>
-              <div className='mb-1'>
-                <label>
-                  <input
-                    type='checkbox'
-                    checked={state.onlyShowXostorePools}
-                    onChange={effects.toggleState}
-                    name='onlyShowXostorePools'
-                  />{' '}
-                  Only show pools that meet XOSTOR requirements
-                </label>
-                <SelectPool predicate={state.xostorePoolPredicate} value={state.poolId} onChange={effects.onChange} />
-                {state.poolId !== undefined && !state.isPoolCompatibleXostore && (
-                  <div className='text-danger'>
-                    {/* @TODO: add href */}
-                    <p className='mb-0'>
-                      <Pool id={state.poolId} link /> does not meet the requirements for XOSTOR. Refer to the{' '}
-                      <a href='#'>documentation</a>
-                    </p>
-                    <ul>
-                      {!state.isXcpngPool && <li>Not an XCP-ng pool</li>}
-                      {!state.isPoolGoodNumberOfHosts && <li>Wrong number of hosts</li>}
-                      {state.poolAlreadyHasXostore && <li>Already have a XOSTOR storage</li>}
-                    </ul>
+          <Row>
+            <Col size={6}>
+              <Card>
+                <CardHeader>Pool</CardHeader>
+                <CardBlock>
+                  <div className='mb-1'>
+                    <label>
+                      <input
+                        type='checkbox'
+                        checked={state.onlyShowXostorePools}
+                        onChange={effects.toggleState}
+                        name='onlyShowXostorePools'
+                      />{' '}
+                      Only show pools that meet XOSTOR requirements
+                    </label>
+                    <SelectPool
+                      predicate={state.xostorePoolPredicate}
+                      value={state.poolId}
+                      onChange={effects.onChange}
+                    />
+                    {state.poolId !== undefined && !state.isPoolCompatibleXostore && (
+                      <div className='text-danger'>
+                        {/* @TODO: add href */}
+                        <p className='mb-0'>
+                          <Pool id={state.poolId} link /> does not meet the requirements for XOSTOR. Refer to the{' '}
+                          <a href='#'>documentation</a>
+                        </p>
+                        <ul>
+                          {!state.isXcpngPool && <li>Not an XCP-ng pool</li>}
+                          {!state.isPoolGoodNumberOfHosts && <li>Wrong number of hosts</li>}
+                          {state.poolAlreadyHasXostore && <li>Already have a XOSTOR storage</li>}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              {/* Install packages */}
-              <div className='mb-1'>
-                <em>
-                  <Icon icon='info' /> On each hosts, "xcp-ng-release-linstor" and "xcp-ng-linstor" will be installed.
-                  You also can install them manually
-                </em>
-                <br />
-                <ActionButton
-                  btnStyle='primary'
-                  disabled={!state.isPoolCompatibleXostore || !state.hostsIsMissingPackages}
-                  tooltip={
-                    !state.isPoolCompatibleXostore
-                      ? 'Invalid pool'
-                      : !state.hostsIsMissingPackages
-                      ? 'Hosts already have packages'
-                      : undefined
-                  }
-                  icon='menu-xosan'
-                >
-                  Install packages
-                </ActionButton>
-              </div>
-            </CardBlock>
-          </Card>
+                  {/* Install packages */}
+                  <div className='mb-1'>
+                    <em>
+                      <Icon icon='info' /> On each hosts, "xcp-ng-release-linstor" and "xcp-ng-linstor" will be
+                      installed.
+                    </em>
+                  </div>
+                </CardBlock>
+              </Card>
+            </Col>
+            <Col size={6}>
+              <NetworkSection />
+            </Col>
+          </Row>
           <DisksSection hosts={state.hostsPool} poolId={state.poolId} />
         </Container>
       </Page>
@@ -392,8 +400,7 @@ const DisksSection = decorate([
                   disks => disks.length !== Object.values(state.disksByHost)[0].length
                 ) && (
                   <p className='text-warning'>
-                    <Icon icon='warning' />
-                    Hosts do not have the same number of disks
+                    <Icon icon='alarm' /> Hosts do not have the same number of disks
                   </p>
                 )}
                 <Row>
@@ -408,10 +415,13 @@ const DisksSection = decorate([
                   <Col size={6}>
                     Pool: <Pool id={state.poolId} link />
                   </Col>
-                  <Col size={6}>Number of hosts: {Object.keys(state.disksByHost).length}</Col>
+                  <Col size={6}>
+                    Network: <Network id={state.networkId ?? state.defaultNetworkId} />
+                  </Col>
                 </Row>
                 <Row>
-                  <Col>Potential final size: {formatSize(state.minVgSize)}</Col>
+                  <Col size={6}>Number of hosts: {Object.keys(state.disksByHost).length}</Col>
+                  <Col size={6}>Potential final size: {formatSize(state.minVgSize)}</Col>
                 </Row>
               </div>
             )}
@@ -434,36 +444,45 @@ const DisksSection = decorate([
 
 const HostDropdown = ({ host, disks }) => {
   return (
-    <Collapse buttonText={`(${disks?.length ?? 0}) ${host.hostname}`} className='mb-1' size='medium'>
-      <ul
-        style={{
-          padding: 0,
-        }}
-      >
-        {disks?.map(disk => {
-          const diskGoodType = disk.type === 'disk'
-          const diskRo = disk.ro === '1'
-          const diskMounted = disk.mountpoint !== ''
-          const isDiskValid = diskGoodType && !diskRo && !diskMounted
-          return (
-            <li key={disk.name} className='list-group-item'>
-              <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
-              {!isDiskValid && (
-                <div className='text-danger'>
-                  <Icon icon='error' /> Disk incompatible with XOSTOR
-                  <ul>
-                    {!diskGoodType && (
-                      <li>Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}</li>
-                    )}
-                    {diskRo && <li>Disk is read only</li>}
-                    {diskMounted && <li>Disk have a mountpoint</li>}
-                  </ul>
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+    <Collapse
+      buttonText={`(${disks?.length ?? 0} disk${disks?.length > 1 ? 's' : ''}) ${host.hostname}`}
+      className='mb-1'
+      size='medium'
+      defaultOpen
+    >
+      {disks?.length > 0 ? (
+        <ul
+          style={{
+            padding: 0,
+          }}
+        >
+          {disks.map(disk => {
+            const diskGoodType = disk.type === 'disk'
+            const diskRo = disk.ro === '1'
+            const diskMounted = disk.mountpoint !== ''
+            const isDiskValid = diskGoodType && !diskRo && !diskMounted
+            return (
+              <li key={disk.name} className='list-group-item'>
+                <Icon icon='disk' /> {formatDiskName(disk.name)} {formatSize(Number(disk.size))}
+                {!isDiskValid && (
+                  <div className='text-danger'>
+                    <Icon icon='error' /> Disk incompatible with XOSTOR
+                    <ul>
+                      {!diskGoodType && (
+                        <li>Only disk type: "Disk" and "Raid" are accpected. Selected disk: {disk.type}</li>
+                      )}
+                      {diskRo && <li>Disk is read only</li>}
+                      {diskMounted && <li>Disk have a mountpoint</li>}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        'No disk'
+      )}
     </Collapse>
   )
 }
@@ -492,8 +511,18 @@ const SettingsSection = decorate([
             <label>
               <strong>Replication</strong>
             </label>
-            <NumberInput max={3} min={1} onChange={effects.onReplicationChange} value={state.replication} />
-            {state.replication === 1 && <p className='text-warning'>If one disks dies, you lose data. Message TBD</p>}
+            <Select
+              options={[
+                { value: 1, label: '1' },
+                { value: 2, label: '2' },
+                { value: 3, label: '3' },
+              ]}
+              onChange={effects.onReplicationChange}
+              value={state.replication}
+            />
+            {state.replication.value === 1 && (
+              <p className='text-warning'>If one disks dies, you lose data. Message TBD</p>
+            )}
           </div>
           <div className='form-group'>
             <label>
@@ -501,6 +530,53 @@ const SettingsSection = decorate([
             </label>
             <Select options={PROVISIONING_MODE} onChange={effects.onProvisioningChange} value={state.provisioning} />
           </div>
+        </CardBlock>
+      </Card>
+    )
+  },
+])
+
+const NetworkSection = decorate([
+  connectStore(() => {
+    return (state, props) => ({
+      networks: createGetObjectsOfType('network'),
+      pifs: createGetObjectsOfType('PIF'),
+    })
+  }),
+  provideState({
+    initialState: () => ({ onlyShowXostorNetworks: true }),
+    effects: {
+      toggleState,
+    },
+    computed: {
+      networksPredicate: (state, props) => network => {
+        const filterByPoolId = network.$pool === state.poolId
+        return state.onlyShowXostorNetworks
+          ? filterByPoolId && network.PIFs.length > 0 && network.PIFs.every(pifId => props.pifs[pifId].ip !== '')
+          : filterByPoolId
+      },
+    },
+  }),
+  injectState,
+  ({ effects, state, ...props }) => {
+    return (
+      <Card>
+        <CardHeader>Network</CardHeader>
+        <CardBlock>
+          <label>
+            <input
+              type='checkbox'
+              checked={state.onlyShowXostorNetworks}
+              onChange={effects.toggleState}
+              name='onlyShowXostorNetworks'
+            />{' '}
+            Only show pools that meet XOSTOR requirements
+          </label>
+          <SelectNetwork
+            predicate={state.networksPredicate}
+            onChange={effects.onChangeNetwork}
+            value={state.networkId ?? state.defaultNetworkId}
+          />
         </CardBlock>
       </Card>
     )
