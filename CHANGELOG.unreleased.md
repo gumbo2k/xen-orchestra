@@ -7,6 +7,8 @@
 
 > Users must be able to say: “Nice enhancement, I'm eager to test it”
 
+- [fs/s3] retry all methods on S3 failure to better support alternative providers (PR [#6966](https://github.com/vatesfr/xen-orchestra/pull/6966))
+
 ### Bug fixes
 
 > Users must be able to say: “I had this issue, happy to know it's fixed”
@@ -31,6 +33,7 @@
 <!--packages-start-->
 
 - @xen-orchestra/backups patch
+- @xen-orchestra/fs minor
 - xen-api patch
 - xo-server patch
 - xo-server-auth-ldap patch
