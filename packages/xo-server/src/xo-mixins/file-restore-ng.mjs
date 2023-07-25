@@ -1,5 +1,7 @@
 import Disposable from 'promise-toolbox/Disposable'
 import { execa } from 'execa'
+import { MultiKeyMap } from '@vates/multi-key-map'
+import { asyncEach } from '@vates/async-each'
 
 // - [x] list partitions
 // - [x] list files in a partition
@@ -22,6 +24,8 @@ import { execa } from 'execa'
 //       - [ ] getMountedPartitions
 //       - [ ] unmountPartition
 export default class BackupNgFileRestore {
+  #mounts = new MultiKeyMap()
+
   constructor(app) {
     this._app = app
 
@@ -31,6 +35,12 @@ export default class BackupNgFileRestore {
       await Promise.all([execa('losetup', ['-D']), execa('vgchange', ['-an'])])
       await execa('pvscan', ['--cache'])
     })
+
+    app.hooks.on('stop', () =>
+      asyncEach(this.#mounts.values(), async pDisposable => {
+        await (await pDisposable).dispose()
+      })
+    )
   }
 
   async fetchBackupNgPartitionFiles(remoteId, diskId, partitionId, paths) {
@@ -99,5 +109,37 @@ export default class BackupNgFileRestore {
       : Disposable.use(app.getBackupsRemoteAdapter(remote), adapter =>
           adapter.listPartitionFiles(diskId, partitionId, path)
         )
+  }
+
+  async mountPartition(remote, diskId, partitionId) {
+    const mounts = this.#mounts
+    const key = [remote.id, diskId, partitionId]
+
+    let pDisposable = mounts.get(key)
+    if (pDisposable === undefined) {
+      pDisposable = Disposable.use(this._app.getBackupsRemoteAdapter(remote), adapter =>
+        adapter.getPartition(diskId, partitionId)
+      )
+      mounts.set(key, pDisposable)
+      pDisposable.catch(() => {
+        mounts.delete(key)
+      })
+    }
+
+    return (await pDisposable).value
+  }
+
+  async unmountPartition(remoteId, diskId, partitionId) {
+    const mounts = this.#mounts
+    const key = [remoteId, diskId, partitionId]
+
+    const pDisposable = mounts.get(key)
+    if (pDisposable === undefined) {
+      return
+    }
+
+    mounts.delete(key)
+
+    await (await pDisposable).dispose()
   }
 }
