@@ -2964,6 +2964,14 @@ export const deleteUsers = users =>
 export const editUser = (user, { email, password, permission }) =>
   _call('user.set', { id: resolveId(user), email, password, permission })::tap(subscribeUsers.forceRefresh)
 
+export const removeUserAuthProvider = ({ userId, authProviderId }) => {
+  _call('user.removeAuthProvider', { id: userId, authProvider: authProviderId })
+    ::tap(subscribeUsers.forceRefresh)
+    .catch(e => {
+      error('user.removeAuthProvider', e.message)
+    })
+}
+
 const _signOutFromEverywhereElse = () =>
   _call('token.delete', {
     pattern: {
