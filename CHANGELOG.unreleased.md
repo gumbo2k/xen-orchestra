@@ -31,6 +31,7 @@
 <!--packages-start-->
 
 - @xen-orchestra/backups patch
+- @vates/nbd-client patch
 - xen-api patch
 - xo-server patch
 - xo-server-auth-ldap patch
