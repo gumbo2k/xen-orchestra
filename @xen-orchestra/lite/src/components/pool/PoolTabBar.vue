@@ -33,7 +33,12 @@
 <script lang="ts" setup>
 import RouterTab from "@/components/RouterTab.vue";
 import UiTabBar from "@/components/ui/UiTabBar.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 
-const { pool, isReady } = usePoolStore().subscribe();
+const { pool, isReady } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
 </script>

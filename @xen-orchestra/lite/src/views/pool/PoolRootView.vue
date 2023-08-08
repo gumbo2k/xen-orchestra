@@ -10,10 +10,16 @@
 <script lang="ts" setup>
 import PoolHeader from "@/components/pool/PoolHeader.vue";
 import PoolTabBar from "@/components/pool/PoolTabBar.vue";
-import { usePoolStore } from "@/stores/pool.store";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { usePageTitleStore } from "@/stores/page-title.store";
+import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 
-const { pool } = usePoolStore().subscribe();
+const { pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
+
 usePageTitleStore().setObject(pool);
 </script>
 

@@ -157,7 +157,11 @@
 </template>
 
 <script lang="ts" setup>
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
+import { useHostStore } from "@/stores/host.store";
 import { usePageTitleStore } from "@/stores/page-title.store";
+import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 import { computed } from "vue";
 import UiCardTitle from "@/components/ui/UiCardTitle.vue";
 import UiIcon from "@/components/ui/icon/UiIcon.vue";
@@ -166,8 +170,6 @@ import { useUiStore } from "@/stores/ui.store";
 import { storeToRefs } from "pinia";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useHostStore } from "@/stores/host.store";
-import { usePoolStore } from "@/stores/pool.store";
 import { locales } from "@/i18n";
 import {
   faEarthAmericas,
@@ -186,7 +188,11 @@ const { t, locale } = useI18n();
 
 usePageTitleStore().setTitle(() => t("settings"));
 
-const { pool } = usePoolStore().subscribe();
+const { pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
+
 const { getByOpaqueRef: getHost } = useHostStore().subscribe();
 
 const poolMaster = computed(() =>

@@ -295,7 +295,7 @@ export default class XenApi {
 
   async loadRecords<
     T extends RawObjectType,
-    R extends RawTypeToRecord<T> = RawTypeToRecord<T>
+    R extends RawTypeToRecord<T> = RawTypeToRecord<T>,
   >(type: T): Promise<R[]> {
     const result = await this.#call<{ [key: string]: R }>(
       `${type}.get_all_records`,

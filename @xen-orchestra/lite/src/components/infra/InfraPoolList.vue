@@ -28,10 +28,15 @@ import InfraHostList from "@/components/infra/InfraHostList.vue";
 import InfraItemLabel from "@/components/infra/InfraItemLabel.vue";
 import InfraLoadingItem from "@/components/infra/InfraLoadingItem.vue";
 import InfraVmList from "@/components/infra/InfraVmList.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 import { faBuilding } from "@fortawesome/free-regular-svg-icons";
 
-const { isReady, hasError, pool } = usePoolStore().subscribe();
+const { isReady, hasError, pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
 </script>
 
 <style lang="postcss" scoped>

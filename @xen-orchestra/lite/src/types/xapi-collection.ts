@@ -1,3 +1,4 @@
+import type { XenApiRecord } from "@/libs/xen-api";
 import type {
   RawObjectType,
   XenApiConsole,
@@ -13,14 +14,24 @@ import type {
 } from "@/libs/xen-api";
 import type { ComputedRef, Ref } from "vue";
 
-type DefaultExtension<
-  T extends RawObjectType,
-  R extends RawTypeToRecord<T> = RawTypeToRecord<T>
+export type CollectionGetterOptions<
+  InputType extends XenApiRecord<any>,
+  OutputType extends XenApiRecord<any>,
 > = {
-  records: ComputedRef<R[]>;
-  getByOpaqueRef: (opaqueRef: R["$ref"]) => R | undefined;
-  getByUuid: (uuid: R["uuid"]) => R | undefined;
-  hasUuid: (uuid: R["uuid"]) => boolean;
+  filter?: (record: InputType) => boolean;
+  sort?: (a: InputType, b: InputType) => number;
+  transform?: (record: InputType) => OutputType;
+};
+
+export type SubscribeOptions<Immediate extends boolean> = {
+  immediate?: Immediate;
+};
+
+export type ImmediateSubscription<T extends XenApiRecord<any>> = {
+  records: Readonly<Ref<T[]>>;
+  getByOpaqueRef: (opaqueRef: T["$ref"]) => T | undefined;
+  getByUuid: (uuid: T["uuid"]) => T | undefined;
+  hasUuid: (uuid: T["uuid"]) => boolean;
   isReady: Readonly<Ref<boolean>>;
   isFetching: Readonly<Ref<boolean>>;
   isReloading: ComputedRef<boolean>;
@@ -28,62 +39,50 @@ type DefaultExtension<
   lastError: Readonly<Ref<string | undefined>>;
 };
 
-type DeferExtension = [
-  {
+export type DeferredSubscription<T extends XenApiRecord<any>> =
+  ImmediateSubscription<T> & {
     start: () => void;
     isStarted: ComputedRef<boolean>;
-  },
-  { immediate: false }
-];
-
-type DefaultExtensions<T extends RawObjectType> = [
-  DefaultExtension<T>,
-  DeferExtension
-];
-
-type GenerateSubscribeOptions<Extensions extends any[]> = Extensions extends [
-  infer FirstExtension,
-  ...infer RestExtension
-]
-  ? FirstExtension extends [object, infer FirstCondition]
-    ? FirstCondition & GenerateSubscribeOptions<RestExtension>
-    : GenerateSubscribeOptions<RestExtension>
-  : object;
-
-export type SubscribeOptions<Extensions extends any[]> = Partial<
-  GenerateSubscribeOptions<Extensions> &
-    GenerateSubscribeOptions<DefaultExtensions<any>>
->;
-
-type GenerateSubscription<
-  Options extends object,
-  Extensions extends any[]
-> = Extensions extends [infer FirstExtension, ...infer RestExtension]
-  ? FirstExtension extends [infer FirstObject, infer FirstCondition]
-    ? Options extends FirstCondition
-      ? FirstObject & GenerateSubscription<Options, RestExtension>
-      : GenerateSubscription<Options, RestExtension>
-    : FirstExtension & GenerateSubscription<Options, RestExtension>
-  : object;
+  };
 
 export type Subscription<
-  T extends RawObjectType,
-  Options extends object,
-  Extensions extends any[] = []
-> = GenerateSubscription<Options, Extensions> &
-  GenerateSubscription<Options, DefaultExtensions<T>>;
+  T extends XenApiRecord<any>,
+  O extends SubscribeOptions<boolean> = any,
+> = O extends SubscribeOptions<infer Immediate>
+  ? Immediate extends false
+    ? DeferredSubscription<T>
+    : ImmediateSubscription<T>
+  : never;
 
-export function createSubscribe<
-  T extends RawObjectType,
-  Extensions extends any[],
-  Options extends object = SubscribeOptions<Extensions>
->(builder: (options?: Options) => Subscription<T, Options, Extensions>) {
-  return function subscribe<O extends Options>(
-    options?: O
-  ): Subscription<T, O, Extensions> {
-    return builder(options);
-  };
+interface ISubscribe<T extends XenApiRecord<any>> {
+  (options?: SubscribeOptions<true>): ImmediateSubscription<T>;
+  (options: SubscribeOptions<false>): DeferredSubscription<T>;
+  <O extends SubscribeOptions<boolean>>(options?: O): Subscription<T, O>;
 }
+
+export interface XenApiCollection<T extends XenApiRecord<any>> {
+  subscribe: ISubscribe<T>;
+  hasSubscriptions: ComputedRef<boolean>;
+  add: (record: T) => void;
+  update: (record: T) => void;
+  remove: (opaqueRef: T["$ref"]) => void;
+}
+
+type ExtractExtensions<T extends any[]> = T extends [infer First, ...infer Rest]
+  ? First extends SubscriptionExtension<any, infer X>
+    ? X & ExtractExtensions<Rest>
+    : ExtractExtensions<Rest>
+  : object;
+
+export type ExtendedSubscription<
+  T extends Subscription<any>,
+  X extends SubscriptionExtension<any, any>[],
+> = T & ExtractExtensions<X>;
+
+export type SubscriptionExtension<
+  T extends Subscription<any>,
+  X extends object,
+> = (subscription: T) => X;
 
 export type RawTypeToRecord<T extends RawObjectType> = T extends "SR"
   ? XenApiSr

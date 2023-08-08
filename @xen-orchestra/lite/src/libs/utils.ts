@@ -5,6 +5,7 @@ import type {
   XenApiVm,
   VM_OPERATION,
   RawObjectType,
+  XenApiHostMetrics,
 } from "@/libs/xen-api";
 import type { Filter } from "@/types/filter";
 import type { Subscription } from "@/types/xapi-collection";
@@ -116,14 +117,14 @@ export function getStatsLength(stats?: object | any[]) {
 
 export function isHostRunning(
   host: XenApiHost,
-  hostMetricsSubscription: Subscription<"host_metrics", object>
+  hostMetricsSubscription: Subscription<XenApiHostMetrics>
 ) {
   return hostMetricsSubscription.getByOpaqueRef(host.metrics)?.live === true;
 }
 
 export function getHostMemory(
   host: XenApiHost,
-  hostMetricsSubscription: Subscription<"host_metrics", object>
+  hostMetricsSubscription: Subscription<XenApiHostMetrics>
 ) {
   const hostMetrics = hostMetricsSubscription.getByOpaqueRef(host.metrics);
 

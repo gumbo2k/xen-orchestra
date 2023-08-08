@@ -23,7 +23,9 @@ import AppNavigation from "@/components/AppNavigation.vue";
 import AppTooltips from "@/components/AppTooltips.vue";
 import UnreachableHostsModal from "@/components/UnreachableHostsModal.vue";
 import { useChartTheme } from "@/composables/chart-theme.composable";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 import { useUiStore } from "@/stores/ui.store";
 import { useXenApiStore } from "@/stores/xen-api.store";
 import { useActiveElement, useMagicKeys, whenever } from "@vueuse/core";
@@ -42,7 +44,11 @@ if (link == null) {
 link.href = favicon;
 
 const xenApiStore = useXenApiStore();
-const { pool } = usePoolStore().subscribe();
+
+const { pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
 useChartTheme();
 const uiStore = useUiStore();
 

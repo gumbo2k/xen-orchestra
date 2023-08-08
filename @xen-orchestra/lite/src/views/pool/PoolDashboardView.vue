@@ -42,12 +42,16 @@ import PoolDashboardStorageUsage from "@/components/pool/dashboard/PoolDashboard
 import PoolDashboardRamUsageChart from "@/components/pool/dashboard/ramUsage/PoolRamUsage.vue";
 import UiCardComingSoon from "@/components/ui/UiCardComingSoon.vue";
 import UiCardGroup from "@/components/ui/UiCardGroup.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import useFetchStats from "@/composables/fetch-stats.composable";
 import { GRANULARITY, type HostStats, type VmStats } from "@/libs/xapi-stats";
 import type { XenApiHost, XenApiVm } from "@/libs/xen-api";
-import { useHostMetricsStore } from "@/stores/host-metrics.store";
+import { getStatsExtension as getHostStatsExtension } from "@/stores/extensions/host/get-stats.extension";
+import { getStatsExtension as getVmStatsExtension } from "@/stores/extensions/vm/get-stats.extension";
 import { useHostStore } from "@/stores/host.store";
+import { runningHostsExtension } from "@/stores/extensions/host/running-hosts.extension";
 import { usePageTitleStore } from "@/stores/page-title.store";
+import { runningVmsExtension } from "@/stores/extensions/vm/running-vms.extension";
 import { useVmStore } from "@/stores/vm.store";
 import {
   IK_HOST_LAST_WEEK_STATS,
@@ -60,15 +64,19 @@ import { useI18n } from "vue-i18n";
 
 usePageTitleStore().setTitle(useI18n().t("dashboard"));
 
-const hostMetricsSubscription = useHostMetricsStore().subscribe();
-
-const hostSubscription = useHostStore().subscribe({ hostMetricsSubscription });
+const hostSubscription = useExtendedSubscription(
+  useHostStore().subscribe(),
+  runningHostsExtension,
+  getHostStatsExtension
+);
 
 const { runningHosts, getStats: getHostStats } = hostSubscription;
 
-const { runningVms, getStats: getVmStats } = useVmStore().subscribe({
-  hostSubscription,
-});
+const { runningVms, getStats: getVmStats } = useExtendedSubscription(
+  useVmStore().subscribe(),
+  runningVmsExtension,
+  getVmStatsExtension
+);
 
 const {
   register: hostRegister,

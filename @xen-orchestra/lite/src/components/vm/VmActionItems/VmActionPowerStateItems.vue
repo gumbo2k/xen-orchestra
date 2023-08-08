@@ -95,12 +95,14 @@
 import MenuItem from "@/components/menu/MenuItem.vue";
 import PowerStateIcon from "@/components/PowerStateIcon.vue";
 import UiIcon from "@/components/ui/icon/UiIcon.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { isHostRunning, isOperationsPending } from "@/libs/utils";
 import type { XenApiHost, XenApiVm } from "@/libs/xen-api";
 import { POWER_STATE, VM_OPERATION } from "@/libs/xen-api";
 import { useHostMetricsStore } from "@/stores/host-metrics.store";
 import { useHostStore } from "@/stores/host.store";
 import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 import { useVmStore } from "@/stores/vm.store";
 import { useXenApiStore } from "@/stores/xen-api.store";
 import {
@@ -123,7 +125,10 @@ const props = defineProps<{
 
 const { getByOpaqueRef: getVm } = useVmStore().subscribe();
 const { records: hosts } = useHostStore().subscribe();
-const { pool } = usePoolStore().subscribe();
+const { pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
 const hostMetricsSubscription = useHostMetricsStore().subscribe();
 
 const vms = computed<XenApiVm[]>(() =>

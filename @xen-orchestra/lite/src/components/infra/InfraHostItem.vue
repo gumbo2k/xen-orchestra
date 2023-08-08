@@ -28,10 +28,12 @@
 import InfraAction from "@/components/infra/InfraAction.vue";
 import InfraItemLabel from "@/components/infra/InfraItemLabel.vue";
 import InfraVmList from "@/components/infra/InfraVmList.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { vTooltip } from "@/directives/tooltip.directive";
 import type { XenApiHost } from "@/libs/xen-api";
 import { useHostStore } from "@/stores/host.store";
 import { usePoolStore } from "@/stores/pool.store";
+import { uniquePoolExtension } from "@/stores/extensions/pool/unique-pool.extension";
 import { useUiStore } from "@/stores/ui.store";
 import {
   faAngleDown,
@@ -49,7 +51,10 @@ const props = defineProps<{
 const { getByOpaqueRef } = useHostStore().subscribe();
 const host = computed(() => getByOpaqueRef(props.hostOpaqueRef));
 
-const { pool } = usePoolStore().subscribe();
+const { pool } = useExtendedSubscription(
+  usePoolStore().subscribe(),
+  uniquePoolExtension
+);
 
 const isPoolMaster = computed(() => pool.value?.master === props.hostOpaqueRef);
 

@@ -35,7 +35,7 @@ export const useXenApiStore = defineStore("xen-api", () => {
         getRawObjectType(result.class)
       );
 
-      if (!collection.hasSubscriptions) {
+      if (!collection.hasSubscriptions.value) {
         return;
       }
 

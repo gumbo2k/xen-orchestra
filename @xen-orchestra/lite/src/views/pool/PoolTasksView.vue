@@ -15,12 +15,15 @@ import UiCard from "@/components/ui/UiCard.vue";
 import UiCardSpinner from "@/components/ui/UiCardSpinner.vue";
 import UiCounter from "@/components/ui/UiCounter.vue";
 import UiTitle from "@/components/ui/UiTitle.vue";
-import { useTaskStore } from "@/stores/task.store";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { usePageTitleStore } from "@/stores/page-title.store";
+import { taskByStatusExtension } from "@/stores/extensions/task/by-status.extension";
+import { useTaskStore } from "@/stores/task.store";
 import { useI18n } from "vue-i18n";
 
 const { pendingTasks, finishedTasks, isReady, hasError } =
-  useTaskStore().subscribe();
+  useExtendedSubscription(useTaskStore().subscribe(), taskByStatusExtension);
+
 const { t } = useI18n();
 
 const titleStore = usePageTitleStore();

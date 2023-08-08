@@ -17,10 +17,12 @@
 
 <script lang="ts" setup>
 import SizeStatsSummary from "@/components/ui/SizeStatsSummary.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { formatSize, getHostMemory } from "@/libs/utils";
 import { RRD_STEP_FROM_STRING } from "@/libs/xapi-stats";
 import { useHostMetricsStore } from "@/stores/host-metrics.store";
 import { useHostStore } from "@/stores/host.store";
+import { runningHostsExtension } from "@/stores/extensions/host/running-hosts.extension";
 import type { LinearChartData, ValueFormatter } from "@/types/chart";
 import { IK_HOST_LAST_WEEK_STATS } from "@/types/injection-keys";
 import { sumBy } from "lodash-es";
@@ -34,7 +36,10 @@ const LinearChart = defineAsyncComponent(
 const hostMetricsSubscription = useHostMetricsStore().subscribe();
 
 const hostStore = useHostStore();
-const { runningHosts } = hostStore.subscribe({ hostMetricsSubscription });
+const { runningHosts } = useExtendedSubscription(
+  hostStore.subscribe(),
+  runningHostsExtension
+);
 
 const { t } = useI18n();
 

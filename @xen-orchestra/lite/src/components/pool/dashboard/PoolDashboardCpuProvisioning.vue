@@ -37,10 +37,12 @@ import UiCard from "@/components/ui/UiCard.vue";
 import UiCardFooter from "@/components/ui/UiCardFooter.vue";
 import UiCardSpinner from "@/components/ui/UiCardSpinner.vue";
 import UiCardTitle from "@/components/ui/UiCardTitle.vue";
+import { useExtendedSubscription } from "@/composables/extended-subscription.composable";
 import { percent } from "@/libs/utils";
 import { POWER_STATE } from "@/libs/xen-api";
 import { useHostMetricsStore } from "@/stores/host-metrics.store";
 import { useHostStore } from "@/stores/host.store";
+import { runningHostsExtension } from "@/stores/extensions/host/running-hosts.extension";
 import { useVmMetricsStore } from "@/stores/vm-metrics.store";
 import { useVmStore } from "@/stores/vm.store";
 import { logicAnd } from "@vueuse/math";
@@ -52,9 +54,7 @@ const {
   hasError: hostStoreHasError,
   isReady: isHostStoreReady,
   runningHosts,
-} = useHostStore().subscribe({
-  hostMetricsSubscription: useHostMetricsStore().subscribe(),
-});
+} = useExtendedSubscription(useHostStore().subscribe(), runningHostsExtension);
 
 const {
   hasError: vmStoreHasError,
