@@ -40,10 +40,11 @@ export default function useRelativeTime(
     }
 
     if (months > 0) {
-      parts.push(t("relative-time.month", { n: months }));
+      const n = days >= 15 ? months + 1 : months;
+      parts.push(t("relative-time.month", { n }));
     }
 
-    if (days > 0) {
+    if (years === 0 && months === 0 && days > 0) {
       parts.push(t("relative-time.day", { n: days }));
     }
 
