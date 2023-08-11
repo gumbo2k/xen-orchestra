@@ -36,6 +36,7 @@
 
 - @xen-orchestra/backups patch
 - @xen-orchestra/mixins minor
+- @xen-orchestra/xapi minor
 - xen-api patch
 - xo-server patch
 - xo-server-auth-ldap patch
