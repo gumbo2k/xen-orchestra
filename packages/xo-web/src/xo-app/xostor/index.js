@@ -3,9 +3,8 @@ import Icon from 'icon'
 import React from 'react'
 import { Container } from 'grid'
 
-import XostorList from './xostor-list'
-
 import Page from '../page'
+import XostorList from './xostor-list'
 
 const HEADER = (
   <Container>
