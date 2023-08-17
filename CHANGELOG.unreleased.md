@@ -29,6 +29,7 @@
 
 <!--packages-start-->
 
+- xo-server patch
 - xo-web minor
 
 <!--packages-end-->
