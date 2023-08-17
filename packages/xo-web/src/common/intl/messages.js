@@ -2442,6 +2442,9 @@ const messages = {
   xosanUnderlyingStorageUsage: 'Using {usage}',
   xosanCustomIpNetwork: 'Custom IP network (/24)',
   xosanIssueHostNotInNetwork: 'Will configure the host xosan network device with a static IP address and plug it in.',
+  // ----- XOSTOR -----
+  noXostorFound: 'No XOSTOR found',
+  xostor: 'XOSTOR',
 
   // Hub
   hubPage: 'Hub',
