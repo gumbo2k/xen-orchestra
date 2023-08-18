@@ -20,6 +20,7 @@
 - [Home/VMs] Filtering with a UUID will no longer show other VMs on the same host/pool
 - [Jobs] Fixes `invalid parameters` when editing [Forum#64668](https://xcp-ng.org/forum/post/64668)
 - [Smart reboot] Fix cases where VMs remained in a suspended state (PR [#6980](https://github.com/vatesfr/xen-orchestra/pull/6980))
+- [Netbox] Fix `the address has neither IPv6 nor IPv4 format` error [Forum#7625](https://xcp-ng.org/forum/topic/7625)
 
 ### Packages to release
 
