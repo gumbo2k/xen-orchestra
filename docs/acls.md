@@ -72,3 +72,12 @@ If the OS install needs an ISO, you need to give this user 2 permissions:
 
 - _Operate_ on the VM (e.g to start it)
 - _View_ on the ISO Storage containing the needed ISO.
+
+### Allow a user to start, stop a vm, create snapshots, revert to snapshots
+
+You should have _view_ permissions on all objects that the VM uses, like ISO Storages, Networks and so on.
+In addition you need 
+
+- _Admin_ on the VM
+- _Operator_ on the Storage containing the VMs disk images
+
